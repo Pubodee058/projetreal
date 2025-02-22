@@ -8,7 +8,7 @@ import 'package:myproject/register.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp();  // ✅ ต้องมีบรรทัดนี้
   runApp(MyApp());
 }
 
