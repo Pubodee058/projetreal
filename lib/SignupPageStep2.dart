@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:myproject/main.dart';
 
 class SignupPageStep2 extends StatefulWidget {
   final String password;
@@ -27,6 +28,7 @@ class _SignupPageStep2State extends State<SignupPageStep2> {
   DateTime? selectedBirthDate;
   int? selectedGrade; // ค่า Grade ที่เลือก
   bool isLoading = false;
+
   Future<void> _selectBirthDate(BuildContext context) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -35,74 +37,95 @@ class _SignupPageStep2State extends State<SignupPageStep2> {
       lastDate: DateTime.now(),
     );
 
-    if (pickedDate != null && pickedDate != selectedBirthDate) {
+    if (pickedDate != null) {
       setState(() {
         selectedBirthDate = pickedDate;
+        birthDateController.text =
+            "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}"; // ✅ ใช้รูปแบบ YYYY-MM-DD
       });
+
+      print(
+          "วันเกิดที่เลือก: ${birthDateController.text}"); // ✅ ตรวจสอบค่าที่อัปเดตใน Console
     }
   }
 
-  Future<void> _registerUser() async {
-    if (firstNameController.text.isEmpty ||
-        lastNameController.text.isEmpty ||
-        phoneNumberController.text.isEmpty ||
-        birthDateController.text.isEmpty ||
-        studentIdController.text.isEmpty ||
-        facultyController.text.isEmpty ||
-        majorController.text.isEmpty ||
-        yearController.text.isEmpty) {
-      // ✅ ลบ , ออกแล้ว
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('กรุณากรอกข้อมูลให้ครบทุกช่อง')),
-      );
-      return;
-    }
+Future<void> _registerUser() async {
+  List<String> missingFields = [];
 
-    setState(() {
-      isLoading = true;
+  if (firstNameController.text.isEmpty) missingFields.add("ชื่อจริง");
+  if (lastNameController.text.isEmpty) missingFields.add("นามสกุล");
+  if (phoneNumberController.text.isEmpty) missingFields.add("เบอร์โทรศัพท์");
+  if (selectedBirthDate == null) missingFields.add("วันเกิด");
+  if (studentIdController.text.isEmpty) missingFields.add("รหัสนักศึกษา"); // ✅ เช็คว่าผู้ใช้กรอกหรือไม่
+  if (facultyController.text.isEmpty) missingFields.add("คณะ");
+  if (majorController.text.isEmpty) missingFields.add("สาขา");
+  if (selectedGrade == null) missingFields.add("ระดับชั้น");
+
+  if (missingFields.isNotEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("กรุณากรอกข้อมูลให้ครบ: ${missingFields.join(', ')}"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    // ✅ สมัครสมาชิก Firebase Authentication
+    UserCredential userCredential =
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: widget.email,
+      password: widget.password,
+    );
+
+    String firebaseUID = userCredential.user!.uid;
+    String userID = studentIdController.text.trim(); // ✅ ใช้ค่าจากที่ผู้ใช้กรอก
+
+    // ✅ บันทึกข้อมูลลง Firestore พร้อม `user_id`
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(firebaseUID)
+        .set({
+      'firebase_uid': firebaseUID,
+      'stu_id': userID, // ✅ ใช้ค่าที่ผู้ใช้กรอกในช่อง studentIdController
+      'stu_email': widget.email,
+      'stu_firstname': firstNameController.text,
+      'stu_lastname': lastNameController.text,
+      'stu_birthdate': selectedBirthDate!.toIso8601String(),
+      'stu_tel': phoneNumberController.text,
+      'stu_faculty': facultyController.text,
+      'stu_major': majorController.text,
+      'stu_grade': selectedGrade,
+      'role': "user", // ✅ กำหนดค่า role เป็น "user"
+      'createdAt': DateTime.now(),
     });
 
-    try {
-      // สมัครสมาชิก Firebase Authentication
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: widget.email,
-        password: widget.password,
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('สมัครสมาชิกสำเร็จ!')),
+    );
 
-      String firebaseUID = userCredential.user!.uid;
-
-      // บันทึกข้อมูลลง Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(firebaseUID)
-          .set({
-        'firebase_uid': firebaseUID,
-        'stu_email': widget.email,
-        'stu_firstname': firstNameController.text,
-        'stu_birthdate': DateTime.parse(birthDateController.text),
-        'stu_tel': phoneNumberController.text,
-        'stu_faculty': facultyController.text,
-        'stu_major': majorController.text,
-        'stu_grade': int.tryParse(yearController.text) ?? 0,
-        'createdAt': DateTime.now(),
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('สมัครสมาชิกสำเร็จ!')),
-      );
-
-      Navigator.popUntil(context, (route) => route.isFirst); // กลับไปหน้าแรก
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
+    // ✅ พาผู้ใช้ไปหน้า Login
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+    );
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
   }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -132,21 +155,25 @@ class _SignupPageStep2State extends State<SignupPageStep2> {
                   labelText: 'เบอร์โทรศัพท์', border: OutlineInputBorder()),
             ),
             SizedBox(height: 16),
-            Row(
-              children: [
-                Text(
-                  selectedBirthDate == null
-                      ? "กรุณาเลือกวันเกิด"
-                      : "วันเกิด: ${selectedBirthDate!.toLocal()}"
-                          .split(' ')[0],
-                  style: TextStyle(fontSize: 16),
-                ),
-                Spacer(),
-                ElevatedButton(
+            TextField(
+              controller: studentIdController,
+              decoration: InputDecoration(
+                  labelText: 'รหัสนักศึกษา', border: OutlineInputBorder()),
+            ),
+            SizedBox(height: 16),
+            TextField(
+              controller: birthDateController,
+              readOnly: true, // ✅ ป้องกันไม่ให้ผู้ใช้พิมพ์เอง
+              decoration: InputDecoration(
+                labelText: "วันเกิด",
+                hintText:
+                    "เลือกวันเกิด", // ✅ เพิ่มข้อความกำกับเมื่อยังไม่ได้เลือกวัน
+                border: OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.calendar_today),
                   onPressed: () => _selectBirthDate(context),
-                  child: Text("เลือกวันเกิด"),
                 ),
-              ],
+              ),
             ),
             TextField(
               controller: facultyController,
@@ -177,8 +204,16 @@ class _SignupPageStep2State extends State<SignupPageStep2> {
                 setState(() {
                   selectedGrade = value!;
                 });
+                print(
+                    "ระดับชั้นที่เลือก: $selectedGrade"); // ✅ ตรวจสอบค่าใน console
               },
             ),
+            isLoading
+                ? CircularProgressIndicator() // แสดง Loading ขณะกำลังบันทึกข้อมูล
+                : ElevatedButton(
+                    onPressed: _registerUser, // เรียกใช้งานฟังก์ชันสมัครสมาชิก
+                    child: Text("สมัครสมาชิก"),
+                  ),
           ],
         ),
       ),

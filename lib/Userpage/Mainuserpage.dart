@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:myproject/Userpage/UserSchedulePage.dart';
+import 'package:myproject/Userpage/profileuserpage.dart';
+import 'package:myproject/Userpage/summaryparcpage.dart';
 
 class Mainuserpage extends StatefulWidget {
   @override
@@ -10,9 +13,9 @@ class _MainuserpageState extends State<Mainuserpage> {
 
   // รายการหน้าในแต่ละแท็บ
   final List<Widget> _pages = [
-    // UserSchedulePage(),
-    // Summarypracuserpage(),
-    // Profileuserpage()
+    UserSchedulePage(),
+    Summarypracuserpage(),
+    Profileuserpage()
   ];
 
   // เปลี่ยนแท็บ
