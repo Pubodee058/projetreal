@@ -86,13 +86,13 @@ Future<void> _registerUser() async {
     String firebaseUID = userCredential.user!.uid;
     String userID = studentIdController.text.trim(); // ✅ ใช้ค่าจากที่ผู้ใช้กรอก
 
-    // ✅ บันทึกข้อมูลลง Firestore พร้อม `user_id`
+    // ✅ บันทึกข้อมูลลง Firestore พร้อม `user_id` และ `allowance = 0`
     await FirebaseFirestore.instance
         .collection('users')
         .doc(firebaseUID)
         .set({
       'firebase_uid': firebaseUID,
-      'stu_id': userID, // ✅ ใช้ค่าที่ผู้ใช้กรอกในช่อง studentIdController
+      'user_id': userID, // ✅ ใช้ค่าที่ผู้ใช้กรอกในช่อง studentIdController
       'stu_email': widget.email,
       'stu_firstname': firstNameController.text,
       'stu_lastname': lastNameController.text,
@@ -102,6 +102,7 @@ Future<void> _registerUser() async {
       'stu_major': majorController.text,
       'stu_grade': selectedGrade,
       'role': "user", // ✅ กำหนดค่า role เป็น "user"
+      'allowance': 0, // 🔥 เพิ่มค่าเริ่มต้น `allowance = 0`
       'createdAt': DateTime.now(),
     });
 

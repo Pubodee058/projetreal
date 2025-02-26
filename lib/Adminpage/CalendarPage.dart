@@ -1,13 +1,11 @@
-import 'dart:convert';
-
-import 'package:flutter/material.dart' ;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:myproject/Adminpage/CalendarPage/EvendetailPage.dart';
-import 'package:myproject/Adminpage/CalendarPage/EventPage.dart';
-import 'package:myproject/Adminpage/CalendarPage/PracticeDetailPage.dart';
-import 'package:myproject/Adminpage/CalendarPage/PracticePage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:myproject/Adminpage/CalendarPage/MakeAnnouncementPage.dart';
+import 'package:myproject/Adminpage/CalendarPage/SetPracticeDatePage.dart';
 import 'package:table_calendar/table_calendar.dart';
+// import 'SetPracticeDatePage.dart'; // หน้าเพิ่ม Practice
+// import 'MakeAnnouncementPage.dart'; // หน้าเพิ่ม Announcement
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -15,336 +13,312 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  late Map<DateTime, List<Map<String, dynamic>>> _events;
-  late TextEditingController _eventController;
   late DateTime _selectedDate;
-  late TimeOfDay _selectedTime;
-  bool _isFabExpanded = false;
-  String _eventType = 'Event';
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
     super.initState();
-    // _eventController = TextEditingController();
     _selectedDate = DateTime.now();
-    // _selectedTime = TimeOfDay(hour: 9, minute: 0);
-    _events = {};
-    _loadEvents();
   }
 
-  _loadEvents() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? savedEvents = prefs.getString('events');
-    if (savedEvents != null) {
-      Map<String, dynamic> data = jsonDecode(savedEvents);
-      setState(() {
-        _events = {};
-        data.forEach((key, value) {
-          try {
-            DateTime date = DateTime.parse(key);
-            List<Map<String, String>> eventList =
-                List<Map<String, String>>.from(
-              value.map((e) => Map<String, String>.from(e)),
-            );
-            _events[date] = eventList;
-          } catch (e) {
-            print('Error parsing date $key: $e');
-          }
-        });
-      });
-    }
+  /// 📌 ดึง `announcement` ตามวันที่เลือก
+  Stream<List<Map<String, dynamic>>> _getAnnouncements() {
+    return _firestore
+        .collection('Announcement')
+        .orderBy('ann_date', descending: false) // ✅ แสดงข้อมูลทั้งหมดเรียงตามวันที่
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          'title': doc['ann_title'],
+          'date': (doc['ann_date'] as Timestamp).toDate(), // ✅ แปลง Timestamp เป็น DateTime
+          'start_time': doc['ann_start_time'],
+          'detail': doc['ann_detail'],
+        };
+      }).toList();
+    });
   }
 
-  // _saveEvent(Map<String, dynamic> eventData) async {
-  //   // ถ้า eventData เป็น Map<String, String> แล้วแปลงเป็น Map<String, dynamic>
-  //   Map<String, dynamic> formattedEventData = {
-  //     'title': eventData['title'] ?? '', // เก็บ 'title' ที่ส่งมา
-  //     'description': eventData['description'] ?? '',
-  //     'time': eventData['time'] ?? '',
-  //     'type': eventData['type'] ?? '',
-  //     'date': eventData['date'] ?? DateTime.now(), // เพิ่ม 'date' ด้วย
-  //   };
+  /// 📌 ดึง `practice` ตามวันที่เลือก
+Stream<List<Map<String, dynamic>>> _getPractices() {
+  return _firestore
+      .collection('pratice') // ✅ ตรวจสอบให้แน่ใจว่าสะกดตรงกับ Firestore
+      .orderBy('prt_date', descending: false)
+      .snapshots()
+      .map((snapshot) {
+    return snapshot.docs.map((doc) {
+      try {
+        // ✅ ตรวจสอบและแปลง `prt_date` ให้เป็น `DateTime`
+        DateTime practiceDate;
+        if (doc['prt_date'] is Timestamp) {
+          practiceDate = (doc['prt_date'] as Timestamp).toDate();
+        } else if (doc['prt_date'] is String) {
+          practiceDate = DateTime.parse(doc['prt_date']);
+        } else {
+          throw Exception("Invalid prt_date format: ${doc['prt_date']}");
+        }
 
-  //   setState(() {
-  //     if (!_events.containsKey(_selectedDate)) {
-  //       _events[_selectedDate] = [];
-  //     }
-  //     _events[_selectedDate]!
-  //         .add(formattedEventData); // เพิ่มข้อมูลที่ถูกแปลงแล้ว
-  //   });
-
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   Map<String, dynamic> jsonEvents = _events.map((key, value) {
-  //     return MapEntry(key.toIso8601String(), value);
-  //   });
-
-  //   prefs.setString('events', jsonEncode(jsonEvents));
-  // }
-
-  // _saveEvent(Map<String, dynamic> eventData) async {
-  //   // แปลง eventData เป็น Map<String, String>
-  //   Map<String, String> formattedEventData = {
-  //     'title': eventData['title'] ?? '', // เก็บ 'title' ที่ส่งมา
-  //     'description': eventData['description'] ?? '',
-  //     'time': eventData['time'] ?? '',
-  //     'type': eventData['type'] ?? '',
-  //     'date': eventData['date'].toIso8601String(), // แปลง date ให้เป็น String
-  //   };
-
-  //   setState(() {
-  //     if (!_events.containsKey(_selectedDate)) {
-  //       _events[_selectedDate] = [];
-  //     }
-  //     _events[_selectedDate]!
-  //         .add(formattedEventData); // เพิ่มข้อมูลที่ถูกแปลงแล้ว
-  //   });
-
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   Map<String, dynamic> jsonEvents = _events.map((key, value) {
-  //     return MapEntry(key.toIso8601String(), value);
-  //   });
-
-  //   prefs.setString('events', jsonEncode(jsonEvents));
-  // }
-  _saveEvent(Map<String, dynamic> eventData) async {
-  // แปลง eventData เป็น Map<String, String>
-  Map<String, String> formattedEventData = {
-    'title': eventData['title'] ?? '', // เก็บ 'title' ที่ส่งมา
-    'description': eventData['description'] ?? '',
-    'time': eventData['time'] ?? '',
-    'type': eventData['type'] ?? '',
-    'date': eventData['date'].toIso8601String(), // แปลง date ให้เป็น String
-  };
-
-  setState(() {
-    if (!_events.containsKey(_selectedDate)) {
-      _events[_selectedDate] = [];
-    }
-    _events[_selectedDate]!.add(formattedEventData); // เพิ่มข้อมูลที่ถูกแปลงแล้ว
+        // ✅ ใช้ `??` เพื่อป้องกัน `null`
+        return {
+          'id': doc.id,
+          'title': doc.data().containsKey('prt_title') ? doc['prt_title'] ?? "No Title" : "No Title",
+          'date': practiceDate,
+          'start_time': doc.data().containsKey('prt_start_time') ? doc['prt_start_time'] ?? "No Time" : "No Time",
+          'detail': doc.data().containsKey('prt_detail') ? doc['prt_detail'] ?? "No Details" : "No Details",
+        };
+      } catch (e) {
+        print("❌ Error parsing practice: ${doc.id} - $e");
+        return <String, dynamic>{}; // ✅ คืนค่า Map ว่างในกรณีที่มีข้อผิดพลาด
+      }
+    }).toList();
   });
-
-  // เก็บข้อมูลใน SharedPreferences
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  List<String> eventList = _events[_selectedDate]!.map((e) => jsonEncode(e)).toList();
-  prefs.setStringList('events', eventList);  // เก็บเป็น List ของ JSON string
 }
 
 
+
+
+ /// 📌 ลบ `announcement` และอัปเดต UI
+void _deleteAnnouncement(String id) async {
+  try {
+    await _firestore.collection('Announcement').doc(id).delete(); // ✅ แก้ชื่อ Collection
+    setState(() {}); // ✅ อัปเดต UI
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("✅ Announcement deleted")));
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("❌ Failed to delete: $e")));
+  }
+}
+
+/// 📌 ลบ `practice` และอัปเดต UI
+void _deletePractice(String id, DateTime practiceDate) async {
+  try {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    // ✅ ลบเอกสาร `practice` ที่มี ID ตรงกับที่เลือก
+    await firestore.collection('pratice').doc(id).delete(); // 🔥 ลบเฉพาะเอกสารนี้
+
+    // ✅ ค้นหาและลบข้อมูลใน `practice_users` ที่เกี่ยวข้องกับ `practiceDate`
+    QuerySnapshot query = await firestore
+        .collection('practice_users')
+        .where('prt_date', isEqualTo: practiceDate)
+        .get();
+
+    // ✅ ใช้ Batch เพื่อลบข้อมูลทั้งหมดใน `practice_users`
+    WriteBatch batch = firestore.batch();
+    for (var doc in query.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit(); // ✅ ลบทั้งหมดในครั้งเดียว
+
+    // ✅ อัปเดต UI
+    setState(() {});
+
+    // ✅ แจ้งเตือนว่าลบสำเร็จ
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Practice deleted successfully!"))
+    );
+
+  } catch (e) {
+    print("❌ Error deleting practice: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Failed to delete practice."))
+    );
+  }
+}
+
+
+
+
+
+  // /// 📌 ฟังก์ชันแปลง `Timestamp` เป็น `String`
+  // String _formatDate(Timestamp timestamp) {
+  //   DateTime dateTime = timestamp.toDate();
+  //   return DateFormat('dd MMM yy HH:mm').format(dateTime);
+  // }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Schedule')),
-      body: Column(
-        children: [
-          TableCalendar(
-            focusedDay: _selectedDate,
-            selectedDayPredicate: (day) => isSameDay(day, _selectedDate),
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDate = selectedDay;
-              });
-            },
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2025, 12, 31),
-          ),
-          Expanded(
-            child: ListView(
-              children: [
-                _buildAllEventsSection(),
-              ],
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: _buildFab(),
-    );
-  }
-
-  // FAB หลักที่แสดงปุ่มย่อย
-  Widget _buildFab() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
+  return Scaffold(
+    appBar: AppBar(title: Text('Schedule'), backgroundColor: Colors.redAccent),
+    body: Column(
       children: [
-        if (_isFabExpanded) ...[
-          _buildSubFab(
-            label: 'Announcement',
-            icon: Icons.announcement,
-            color: Colors.redAccent,
-            onTap: () {
-              setState(() => _isFabExpanded = false);
-              // ส่งวันที่ที่เลือกไปยังหน้า Event
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EventPage(selectedDate: _selectedDate),
-                ),
-              ).then((eventData) {
-                if (eventData != null) {
-                  _saveEvent(eventData); // เพิ่มข้อมูลใหม่
-                }
-              });
-            },
-          ),
-          SizedBox(height: 10),
-          _buildSubFab(
-            label: 'Practice',
-            icon: Icons.access_time,
-            color: Colors.deepOrangeAccent,
-            onTap: () {
-              setState(() => _isFabExpanded = false);
-              // ส่งวันที่ที่เลือกไปยังหน้า Practice
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      PracticePage(selectedDate: _selectedDate),
-                ),
-              ).then((eventData) {
-                if (eventData != null) {
-                  _saveEvent(eventData); // เพิ่มข้อมูลใหม่
-                }
-              });
-            },
-          ),
-          SizedBox(height: 10),
-        ],
-        FloatingActionButton(
-          onPressed: () {
-            setState(() => _isFabExpanded = !_isFabExpanded);
+        /// 🔹 **ปฏิทินเลือกวัน**
+        TableCalendar(
+          focusedDay: _selectedDate,
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2025, 12, 31),
+          selectedDayPredicate: (day) => isSameDay(day, _selectedDate),
+          onDaySelected: (selectedDay, focusedDay) {
+            setState(() {
+              _selectedDate = selectedDay;
+            });
           },
-          backgroundColor: Colors.redAccent,
-          child: Icon(_isFabExpanded ? Icons.close : Icons.add),
+        ),
+
+        /// 🔹 **ขยายพื้นที่ให้ `ListView` เพื่อไม่ให้เกิด Error**
+        Expanded(
+          child: ListView(
+            children: [
+              _buildSectionTitle('Events/Announcement'),
+              StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _getAnnouncements(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return _buildNoDataMessage("No announcements.");
+                  }
+                  return Column(
+                    children: snapshot.data!.map((announcement) {
+                      return _buildAnnouncementCard(announcement);
+                    }).toList(),
+                  );
+                },
+              ),
+
+              _buildSectionTitle('Practice'),
+              StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _getPractices(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return _buildNoDataMessage("No practices.");
+                  }
+                  return Column(
+                    children: snapshot.data!.map((practice) {
+                      return _buildPracticeCard(practice);
+                    }).toList(),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ],
+    ),
+    floatingActionButton: _buildFab(),
+  );
+}
+
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
     );
   }
 
-  Widget _buildSubFab({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return FloatingActionButton.extended(
-      heroTag: label,
-      onPressed: onTap,
-      label: Text(label),
-      icon: Icon(icon),
-      backgroundColor: color,
+  Widget _buildNoDataMessage(String message) {
+    return Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Text(message, style: TextStyle(fontSize: 14, color: Colors.grey)),
     );
   }
 
-  Widget _buildAllEventsSection() {
-    List<Map<String, dynamic>> allEvents = [];
-    _events.forEach((date, events) {
-      allEvents.addAll(events.map((e) => {
-            'date': date,
-            'time': e['time'] ?? '',
-            'description': e['description'] ?? '',
-            'type': e['type'] ?? '',
-          }));
-    });
-
-    List<Map<String, dynamic>> eventList =
-        allEvents.where((e) => e['type'] == 'Event').toList();
-    List<Map<String, dynamic>> practiceList =
-        allEvents.where((e) => e['type'] == 'Practice').toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (eventList.isNotEmpty) ...[
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            child: Text(
-              'Events/Announcement',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.redAccent,
-              ),
-            ),
-          ),
-          ...eventList.map((event) => _buildEventCard(event)),
-        ],
-        if (practiceList.isNotEmpty) ...[
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            child: Text(
-              'Practice',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepOrangeAccent,
-              ),
-            ),
-          ),
-          ...practiceList.map((event) => _buildEventCard(event)),
-        ],
-      ],
-    );
+Widget _buildAnnouncementCard(Map<String, dynamic> announcement) {
+  // ✅ ตรวจสอบและแปลง `announcement['date']` เป็น `DateTime`
+  DateTime date;
+  if (announcement['date'] is Timestamp) {
+    date = (announcement['date'] as Timestamp).toDate();
+  } else if (announcement['date'] is DateTime) {
+    date = announcement['date'];
+  } else {
+    date = DateTime.now(); // เผื่อเกิดข้อผิดพลาด ใช้วันที่ปัจจุบันแทน
   }
 
-  Widget _buildEventCard(Map<String, dynamic> event) {
-    return Card(
-      elevation: 1,
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        leading: Icon(
-          event['type'] == 'Event' ? Icons.announcement : Icons.access_time,
-          color: event['type'] == 'Event'
-              ? Colors.redAccent
-              : Colors.deepOrangeAccent,
-        ),
-        title: Text(event['title'] ?? 'No Title'),
-        subtitle: Text(
-          '${DateFormat('dd MMM yy').format(event['date'] is DateTime ? event['date'] : DateTime.parse(event['date'] ?? DateTime.now().toIso8601String()))} ${event['time']}',
-        ),
-        onTap: () {
-          // เมื่อคลิกที่การ์ด ให้แสดงรายละเอียดของกิจกรรม
-          Map<String, String> eventData = {
-            'title': event['title'] ?? 'No Title',
-            'description': event['description'] ?? '',
-            'time': event['time'] ?? '',
-            'type': event['type'] ?? '',
-            'date': event['date'] is DateTime
-                ? event['date'].toIso8601String()
-                : event['date'] ?? '', // แปลง DateTime เป็น String
-          };
-
-          if (event['type'] == 'Practice') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PracticeDetailPage(
-                  event: eventData, // ส่งข้อมูลที่เป็น Map<String, String>
-                  attendees: [
-                    'John',
-                    'Jane',
-                    'Doe'
-                  ], // ส่งรายชื่อผู้เข้าร่วมกิจกรรม
-                ),
-              ),
-            );
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EventDetailPage(
-                  event: eventData, // ส่งข้อมูลที่เป็น Map<String, String>
-                ),
-              ),
-            );
-          }
-        },
+  return Card(
+    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: ListTile(
+      leading: Icon(Icons.textsms, color: Colors.redAccent),
+      title: Text(announcement['title']),
+      subtitle: Text(
+        '${_formatDate(date)} - ${announcement['start_time']}\n${announcement['detail']}',
       ),
+      trailing: IconButton(
+        icon: Icon(Icons.more_vert),
+        onPressed: () => _deleteAnnouncement(announcement['id']),
+      ),
+    ),
+  );
+}
+
+/// 📌 ปรับให้ `_formatDate()` รองรับ `DateTime`
+String _formatDate(DateTime dateTime) {
+  return DateFormat('dd MMM yy HH:mm').format(dateTime);
+}
+
+
+
+
+Widget _buildPracticeCard(Map<String, dynamic> practice) {
+  // ✅ ตรวจสอบประเภทของ `practice['date']` และแปลงเป็น `DateTime`
+  DateTime date;
+  if (practice['date'] is Timestamp) {
+    date = (practice['date'] as Timestamp).toDate();
+  } else if (practice['date'] is DateTime) {
+    date = practice['date'];
+  } else {
+    date = DateTime.now(); // เผื่อเกิดข้อผิดพลาด ใช้วันที่ปัจจุบันแทน
+  }
+
+  return Card(
+    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: ListTile(
+      leading: Icon(Icons.access_time, color: Colors.deepOrangeAccent),
+      title: Text(practice['title'] ?? "No Title"), // ✅ ใช้ `??` กำหนดค่าเริ่มต้น
+      subtitle: Text(
+        '${_formatDate(date)} - ${practice['start_time']}\n${practice['detail']}',
+      ),
+      trailing: IconButton(
+        icon: Icon(Icons.more_vert),
+        onPressed: () => _deletePractice(practice['id'], practice['date']),
+      ),
+    ),
+  );
+}
+
+  Widget _buildFab() {
+    return FloatingActionButton.extended(
+      label: Text("Create"),
+      icon: Icon(Icons.add),
+      backgroundColor: Colors.redAccent,
+      onPressed: () => _showCreateOptions(),
     );
   }
 
-  bool isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
+  void _showCreateOptions() {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          title: Text("Announcement"),
+          leading: Icon(Icons.textsms),
+          onTap: () {
+            Navigator.pop(context); // ปิด Bottom Sheet ก่อน
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MakeAnnouncementPage(selectedDate: _selectedDate), // ✅ ส่ง selectedDate ไปด้วย
+              ),
+            );
+          },
+        ),
+        ListTile(
+          title: Text("Practice"),
+          leading: Icon(Icons.access_time),
+          onTap: () {
+            Navigator.pop(context); // ปิด Bottom Sheet ก่อน
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SetPracticeDatePage(selectedDate: _selectedDate), // ✅ ส่ง selectedDate ไปด้วย
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+
 }

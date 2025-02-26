@@ -11,196 +11,120 @@ class PracticePage extends StatefulWidget {
 }
 
 class _PracticePageState extends State<PracticePage> {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController dateController = TextEditingController();
-  TextEditingController startTimeController = TextEditingController();
-  TextEditingController endTimeController = TextEditingController();
-  TextEditingController detailController = TextEditingController();
-  TextEditingController onTimeBudgetController = TextEditingController();
-  TextEditingController lateTimeBudgetController = TextEditingController();
-  TextEditingController paymentDateController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _detailController = TextEditingController();
+  final TextEditingController _budgetLateController = TextEditingController();
+  final TextEditingController _budgetOTController = TextEditingController();
+  DateTime? _payDate;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
 
-  @override
-  void initState() {
-    super.initState();
-    // ตั้งค่าของวันที่ในฟอร์มให้เป็นวันที่ที่เลือกจากหน้า Calendar
-    dateController.text = DateFormat('dd/MM/yyyy').format(widget.selectedDate);
-  }
+  /// 📌 บันทึกข้อมูลและส่งกลับไปยัง `CalendarPage`
+  void _savePractice() {
+    String title = _titleController.text;
+    String detail = _detailController.text;
 
-  // ฟังก์ชันเปิด TimePicker
-  Future<void> _selectTime(BuildContext context, TextEditingController controller) async {
-    TimeOfDay? selectedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (selectedTime != null) {
-      controller.text = selectedTime.format(context);  // แสดงเวลาที่เลือกใน TextFormField
+    if (title.isEmpty || detail.isEmpty || _startTime == null || _endTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("⚠️ กรุณากรอกข้อมูลให้ครบ!")),
+      );
+      return;
     }
+
+    Map<String, dynamic> practiceData = {
+      'prt_title': title,
+      'prt_detail': detail,
+      'prt_date': widget.selectedDate.toIso8601String(),
+      'prt_start_time': _startTime != null
+          ? "${_startTime!.hour}:${_startTime!.minute}"
+          : null,
+      'prt_end_time': _endTime != null
+          ? "${_endTime!.hour}:${_endTime!.minute}"
+          : null,
+      'pay_date': _payDate?.toIso8601String(), // ✅ อนุญาตให้เป็น `null`
+      'prt_budget_late': _budgetLateController.text.isNotEmpty
+          ? double.tryParse(_budgetLateController.text)
+          : null, // ✅ ถ้าว่างให้เป็น `null`
+      'prt_budget_ot': _budgetOTController.text.isNotEmpty
+          ? double.tryParse(_budgetOTController.text)
+          : null, // ✅ ถ้าว่างให้เป็น `null`
+    };
+
+    Navigator.pop(context, practiceData);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Set Practice Date'),
-        backgroundColor: Colors.redAccent,
-      ),
+      appBar: AppBar(title: Text("เพิ่มการฝึกซ้อม")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Add Title
-              TextFormField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'New Practice Session',
-                  border: OutlineInputBorder(),
+        child: Column(
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(labelText: "ชื่อการฝึกซ้อม"),
+            ),
+            TextField(
+              controller: _detailController,
+              decoration: InputDecoration(labelText: "รายละเอียด"),
+            ),
+            SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text("เวลาเริ่ม: ${_startTime?.format(context) ?? 'ไม่ระบุ'}"),
                 ),
-              ),
-              SizedBox(height: 16),
-
-              // Set Date (Auto-filled from the Calendar)
-              TextFormField(
-                controller: dateController,
-                decoration: InputDecoration(
-                  labelText: 'Set date',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today),
+                IconButton(
+                  icon: Icon(Icons.access_time),
+                  onPressed: () async {
+                    TimeOfDay? pickedTime =
+                        await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                    if (pickedTime != null) {
+                      setState(() {
+                        _startTime = pickedTime;
+                      });
+                    }
+                  },
                 ),
-                readOnly: true,
-              ),
-              SizedBox(height: 16),
-
-              // Time Picker for Start time and End time
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _selectTime(context, startTimeController), // เปิด TimePicker
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: startTimeController,
-                          decoration: InputDecoration(
-                            labelText: 'Start time',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Text('to'),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _selectTime(context, endTimeController), // เปิด TimePicker
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: endTimeController,
-                          decoration: InputDecoration(
-                            labelText: 'End time',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-
-              // Detail
-              TextFormField(
-                controller: detailController,
-                decoration: InputDecoration(
-                  labelText: 'Detail',
-                  border: OutlineInputBorder(),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text("เวลาสิ้นสุด: ${_endTime?.format(context) ?? 'ไม่ระบุ'}"),
                 ),
-              ),
-              SizedBox(height: 16),
-
-              // Budget for on-time person
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: onTimeBudgetController,
-                      decoration: InputDecoration(
-                        labelText: 'Budget for on-time person',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Text('B'),
-                ],
-              ),
-              SizedBox(height: 16),
-
-              // Budget for late person
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: lateTimeBudgetController,
-                      decoration: InputDecoration(
-                        labelText: 'Budget for late person',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Text('B'),
-                ],
-              ),
-              SizedBox(height: 16),
-
-              // Payment date
-              TextFormField(
-                controller: paymentDateController,
-                decoration: InputDecoration(
-                  labelText: 'Set payment date',
-                  border: OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      DateTime selectedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2101),
-                      ) ?? DateTime.now();
-                      paymentDateController.text = DateFormat('dd/MM/yyyy').format(selectedDate);
-                    },
-                  ),
+                IconButton(
+                  icon: Icon(Icons.access_time),
+                  onPressed: () async {
+                    TimeOfDay? pickedTime =
+                        await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                    if (pickedTime != null) {
+                      setState(() {
+                        _endTime = pickedTime;
+                      });
+                    }
+                  },
                 ),
-                readOnly: true,
-              ),
-              SizedBox(height: 16),
-
-              // Save button
-              ElevatedButton(
-                onPressed: () {
-                  // ส่งข้อมูลกลับไปที่ CalendarPage
-                  Navigator.pop(context, {
-                    'title': titleController.text,
-                    'date': widget.selectedDate,
-                    'start_time': startTimeController.text,
-                    'end_time': endTimeController.text,
-                    'detail': detailController.text,
-                    'type': 'Practice', // ประเภทกิจกรรม
-                  });
-                },
-                child: Text('Save'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  minimumSize: Size(double.infinity, 50),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
+            SizedBox(height: 10),
+            TextField(
+              controller: _budgetLateController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: "งบประมาณล่าช้า (เว้นว่างได้)"),
+            ),
+            TextField(
+              controller: _budgetOTController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: "งบประมาณ OT (เว้นว่างได้)"),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _savePractice,
+              child: Text("บันทึก"),
+            ),
+          ],
         ),
       ),
     );

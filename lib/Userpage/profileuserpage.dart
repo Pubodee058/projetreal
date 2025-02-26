@@ -45,7 +45,7 @@ class _ProfileuserpageState extends State<Profileuserpage> {
             phone = userDoc['stu_tel'];
             faculty = userDoc['stu_faculty'];
             major = userDoc['stu_major'];
-            studentId = userDoc['stu_id']; // ✅ ดึงค่าจาก Document ID แทน
+            studentId = userDoc['user_id']; // ✅ ดึงค่าจาก Document ID แทน
             studentGrade = userDoc['stu_grade'];
             isLoading = false; // โหลดข้อมูลเสร็จ
           });
