@@ -105,24 +105,27 @@ Stream<List<Map<String, dynamic>>> _getAnnouncements() {
 
 Widget buildJoinCancelButton(Map<String, dynamic> practice) {
   return FutureBuilder<bool>(
-    future: _isUserJoined(practice['date']), // ✅ เช็คว่าลงทะเบียนไว้หรือไม่
+    future: _isUserJoined(practice['date']), // ✅ ตรวจสอบว่าลงทะเบียนแล้วหรือยัง
     builder: (context, snapshot) {
       if (!snapshot.hasData) {
-        return CircularProgressIndicator(); // กำลังโหลดข้อมูล
+        return CircularProgressIndicator(); // ⏳ กำลังโหลด
       }
       bool isJoined = snapshot.data!;
 
       return ElevatedButton(
-        onPressed: () {
+        onPressed: () async {
           if (isJoined) {
-            _cancelPractice(practice['date']); // ✅ ยกเลิกการเข้าร่วม
+            await _cancelPractice(practice['date']); // ✅ ยกเลิกการเข้าร่วม
           } else {
-            _joinPractice(practice['date']); // ✅ ลงทะเบียน
+            await _joinPractice(practice['date']); // ✅ ลงทะเบียน
+          }
+          if (mounted) {
+            setState(() {}); // ✅ อัปเดต UI
           }
         },
-        child: Text(isJoined ? "Cancel" : "Join"), // 🔄 สลับข้อความปุ่ม
+        child: Text(isJoined ? "Cancel" : "Join"), // 🔄 เปลี่ยนข้อความปุ่ม
         style: ElevatedButton.styleFrom(
-          backgroundColor: isJoined ? Colors.grey : Colors.redAccent, // 🔄 สลับสีปุ่ม
+          backgroundColor: isJoined ? Colors.grey : Colors.redAccent, // 🔄 เปลี่ยนสีปุ่ม
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
       );
@@ -130,6 +133,11 @@ Widget buildJoinCancelButton(Map<String, dynamic> practice) {
   );
 }
 
+
+
+
+
+/// 📌 ฟังก์ชันเช็คว่าผู้ใช้เข้าร่วมแล้วหรือยัง
 /// 📌 ฟังก์ชันเช็คว่าผู้ใช้เข้าร่วมแล้วหรือยัง
 Future<bool> _isUserJoined(DateTime practiceDate) async {
   User? user = FirebaseAuth.instance.currentUser;
@@ -142,20 +150,22 @@ Future<bool> _isUserJoined(DateTime practiceDate) async {
       .get();
 
   if (!userDoc.exists) return false;
-  String stuId = userDoc['stu_id'];
+  String stuId = userDoc['user_id'];
 
-  // ✅ เช็คว่ามี `stu_id` ใน `practice_users` หรือไม่
+  // ✅ ตรวจสอบว่า `stu_id` มีอยู่ใน `practice_users` หรือไม่
   QuerySnapshot query = await FirebaseFirestore.instance
       .collection('practice_users')
       .where('user_id', isEqualTo: stuId)
-      .where('prt_date', isEqualTo: practiceDate)
+      .where('prt_date', isEqualTo: Timestamp.fromDate(practiceDate)) // ✅ ใช้ Timestamp
       .get();
 
-  return query.docs.isNotEmpty; // ถ้ามีเอกสาร → แสดงว่าเข้าร่วมแล้ว
+  return query.docs.isNotEmpty; // ✅ ถ้ามีเอกสาร แสดงว่าเข้าร่วมแล้ว
 }
 
+
+
 /// 📌 ฟังก์ชันสำหรับเข้าร่วมการฝึกซ้อม
-void _joinPractice(DateTime practiceDate) async {
+Future<void> _joinPractice(DateTime practiceDate) async {
   try {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("User not logged in");
@@ -166,7 +176,7 @@ void _joinPractice(DateTime practiceDate) async {
         .get();
 
     if (!userDoc.exists) throw Exception("User document not found");
-    String stuId = userDoc['stu_id'];
+    String stuId = userDoc['user_id'];
 
     await FirebaseFirestore.instance.collection('practice_users').add({
       'user_id': stuId,
@@ -185,42 +195,60 @@ void _joinPractice(DateTime practiceDate) async {
   }
 }
 
+
+
 /// 📌 ฟังก์ชันสำหรับยกเลิกการฝึกซ้อม
-void _cancelPractice(DateTime practiceDate) async {
+Future<void> _cancelPractice(DateTime practiceDate) async {
   try {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception("User not logged in");
 
+    // ✅ ดึง `user_id` ของผู้ใช้ปัจจุบันจาก `users` collection
     DocumentSnapshot userDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .get();
 
     if (!userDoc.exists) throw Exception("User document not found");
-    String stuId = userDoc['stu_id'];
+    String stuId = userDoc['user_id'];
 
-    // ✅ ค้นหาและลบข้อมูลใน `practice_users`
+    // ✅ ค้นหาเอกสาร `practice_users` ที่ตรงกับ `practiceDate` และ `user_id`
     QuerySnapshot query = await FirebaseFirestore.instance
         .collection('practice_users')
-        .where('user_id', isEqualTo: stuId)
-        .where('prt_date', isEqualTo: practiceDate)
+        .where('prt_date', isEqualTo: Timestamp.fromDate(practiceDate)) // ✅ ใช้ Timestamp
+        .where('user_id', isEqualTo: stuId) // ✅ หาตรง `user_id`
         .get();
 
+    if (query.docs.isEmpty) {
+      throw Exception("No matching document found to delete.");
+    }
+
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+
     for (var doc in query.docs) {
-      await doc.reference.delete();
+      batch.delete(doc.reference); // ✅ ลบทั้ง Document
+    }
+
+    await batch.commit(); // ✅ ใช้ batch เพื่อลบข้อมูลในคราวเดียว
+
+    if (mounted) {
+      setState(() {}); // ✅ อัปเดต UI
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Cancelled practice successfully!"))
+      SnackBar(content: Text("✅ Cancelled practice successfully!"))
     );
 
   } catch (e) {
     print("❌ Error cancelling practice: $e");
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Failed to cancel practice."))
+      SnackBar(content: Text("❌ Failed to cancel practice.")),
     );
   }
 }
+
+
+
 
 
   /// 📌 ฟังก์ชันแปลง `DateTime` เป็น String
@@ -308,27 +336,20 @@ void _cancelPractice(DateTime practiceDate) async {
   }
 
   /// 📌 Card สำหรับ Practice
-  Widget _buildPracticeCard(Map<String, dynamic> practice, bool isToday) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: Icon(Icons.access_time, color: Colors.deepOrangeAccent),
-        title: Text(practice['title']),
-        subtitle: Text(
-            '${_formatDate(practice['date'])} - ${practice['start_time']}\n${practice['detail']}'),
-        trailing: ElevatedButton(
-          onPressed: () =>
-              _joinPractice(practice['date']), // ✅ ส่ง practice['date'] ไป
-          child: Text("Join"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          ),
-        ),
-      ),
-    );
-  }
+/// 📌 Card สำหรับ Practice
+Widget _buildPracticeCard(Map<String, dynamic> practice, bool isToday) {
+  return Card(
+    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: ListTile(
+      leading: Icon(Icons.access_time, color: Colors.deepOrangeAccent),
+      title: Text(practice['title']),
+      subtitle: Text(
+          '${_formatDate(practice['date'])} - ${practice['start_time']}\n${practice['detail']}'),
+      trailing: buildJoinCancelButton(practice), // ✅ ใช้ปุ่ม Join/Cancel
+    ),
+  );
+}
+
 
   /// 📌 Card สำหรับ Announcement
   Widget _buildAnnouncementCard(Map<String, dynamic> announcement) {
