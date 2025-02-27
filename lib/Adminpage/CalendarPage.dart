@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myproject/Adminpage/CalendarPage/MakeAnnouncementPage.dart';
+import 'package:myproject/Adminpage/CalendarPage/PracticeDetailPage.dart';
 import 'package:myproject/Adminpage/CalendarPage/SetPracticeDatePage.dart';
 import 'package:table_calendar/table_calendar.dart';
 // import 'SetPracticeDatePage.dart'; // หน้าเพิ่ม Practice
@@ -249,31 +250,29 @@ String _formatDate(DateTime dateTime) {
 
 
 Widget _buildPracticeCard(Map<String, dynamic> practice) {
-  // ✅ ตรวจสอบประเภทของ `practice['date']` และแปลงเป็น `DateTime`
-  DateTime date;
-  if (practice['date'] is Timestamp) {
-    date = (practice['date'] as Timestamp).toDate();
-  } else if (practice['date'] is DateTime) {
-    date = practice['date'];
-  } else {
-    date = DateTime.now(); // เผื่อเกิดข้อผิดพลาด ใช้วันที่ปัจจุบันแทน
-  }
-
-  return Card(
-    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: ListTile(
-      leading: Icon(Icons.access_time, color: Colors.deepOrangeAccent),
-      title: Text(practice['title'] ?? "No Title"), // ✅ ใช้ `??` กำหนดค่าเริ่มต้น
-      subtitle: Text(
-        '${_formatDate(date)} - ${practice['start_time']}\n${practice['detail']}',
-      ),
-      trailing: IconButton(
-        icon: Icon(Icons.more_vert),
-        onPressed: () => _deletePractice(practice['id'], practice['date']),
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PracticeDetailPage(practiceId: practice['id']), // ✅ ใช้ doc.id เป็น practiceId
+        ),
+      );
+    },
+    child: Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ListTile(
+        leading: Icon(Icons.access_time, color: Colors.deepOrangeAccent),
+        title: Text(practice['title']),
+        subtitle: Text(
+            '${_formatDate(practice['date'])} - ${practice['start_time']}\n${practice['detail']}'),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       ),
     ),
   );
 }
+
+
 
   Widget _buildFab() {
     return FloatingActionButton.extended(
