@@ -2,10 +2,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class PracticeDetailPage extends StatelessWidget {
-  final String practiceId; // ✅ ใช้ doc.id เป็นตัวระบุ Practice
+class PracticeDetailPage extends StatefulWidget {
+  final String practiceId;
 
   PracticeDetailPage({required this.practiceId});
+
+  @override
+  _PracticeDetailPageState createState() => _PracticeDetailPageState();
+}
+
+class _PracticeDetailPageState extends State<PracticeDetailPage> {
+  bool _isChecking = false; // ใช้ตรวจสอบว่ากด Check หรือยัง
+  Map<String, String> _updatedStatuses = {}; // เก็บสถานะที่อัปเดตของผู้ใช้
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +24,8 @@ class PracticeDetailPage extends StatelessWidget {
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('pratice') // ✅ ตรวจสอบให้ชื่อ Collection ตรงกัน
-            .doc(practiceId)
+            .collection('pratice')
+            .doc(widget.practiceId)
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData || !snapshot.data!.exists) {
@@ -88,7 +96,7 @@ class PracticeDetailPage extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: Colors.redAccent),
                   ),
-                  _buildAttendeeList(practiceDate), // ✅ แสดงรายชื่อ Attendees
+                  _buildAttendeeList(practiceDate),
 
                   /// 🔹 **Delete & Check Button**
                   SizedBox(height: 30),
@@ -104,9 +112,11 @@ class PracticeDetailPage extends StatelessWidget {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          // TODO: Implement Re-check Function
+                          setState(() {
+                            _isChecking = !_isChecking; // กด Check เพื่อเปลี่ยน UI
+                          });
                         },
-                        child: Text("Check"),
+                        child: Text(_isChecking ? "Cancel" : "Check"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
                           shape: RoundedRectangleBorder(
@@ -115,6 +125,21 @@ class PracticeDetailPage extends StatelessWidget {
                       ),
                     ],
                   ),
+
+                  /// 🔹 **Save Button**
+                  if (_isChecking)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveStatuses,
+                        child: Text("Save"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -124,9 +149,7 @@ class PracticeDetailPage extends StatelessWidget {
     );
   }
 
-  /// 🔹 **แสดงรายชื่อ Attendees จาก `practice_users`**
-  /// 🔹 **แสดงรายชื่อ Attendees จาก `practice_users`**
-  /// 🔹 **แสดงรายชื่อ Attendees จาก `practice_users`**
+  /// 🔹 **แสดงรายชื่อ Attendees และอัปเดต Status**
   Widget _buildAttendeeList(DateTime practiceDate) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -143,35 +166,82 @@ class PracticeDetailPage extends StatelessWidget {
 
         return Column(
           children: attendeeDocs.map((doc) {
-            return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance
-                  .collection('users')
-                  .where('user_id', isEqualTo: doc['user_id'])
-                  .get()
-                  .then((query) => query.docs.isNotEmpty
-                      ? query.docs.first.reference.get()
-                      : Future.value(null)),
-              builder: (context, userSnapshot) {
-                if (!userSnapshot.hasData || userSnapshot.data == null) {
-                  return Container(); // ✅ ถ้าหา user ไม่เจอให้คืนค่าเป็นว่าง
-                }
+            String fullName = "${doc['stu_firstname']} ${doc['stu_lastname']}";
+            String currentStatus = _updatedStatuses[doc.id] ?? doc['status'];
 
-                var userData = userSnapshot.data!;
-                String fullName =
-                    "${userData['stu_firstname']} ${userData['stu_lastname']}";
-
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 5),
-                  child: ListTile(
-                    title: Text(fullName),
-                    leading: Icon(Icons.person, color: Colors.deepOrangeAccent),
+            return Card(
+              color: currentStatus == "absent"
+                  ? Colors.red.shade100
+                  : Colors.white,
+              margin: EdgeInsets.symmetric(vertical: 5),
+              child: ListTile(
+                title: Text(
+                  fullName,
+                  style: TextStyle(
+                    color: currentStatus == "absent" ? Colors.red : Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              },
+                ),
+                leading: Icon(Icons.person, color: Colors.deepOrangeAccent),
+                trailing: _isChecking
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.close, color: Colors.red),
+                            onPressed: () =>
+                                _updateTempStatus(doc.id, "absent"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => _updateTempStatus(doc.id, "late"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: currentStatus == "late"
+                                  ? Colors.red
+                                  : Colors.grey[300],
+                            ),
+                            child: Text(
+                              "Late",
+                              style: TextStyle(
+                                color: currentStatus == "late"
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text("Status: $currentStatus"),
+              ),
             );
           }).toList(),
         );
       },
     );
+  }
+
+  /// 🔹 **ฟังก์ชันอัปเดตค่า `status` ชั่วคราวใน UI**
+  void _updateTempStatus(String docId, String status) {
+    setState(() {
+      _updatedStatuses[docId] = status;
+    });
+  }
+
+  /// 🔹 **ฟังก์ชันบันทึก `status` กลับไปที่ Firestore**
+  void _saveStatuses() async {
+    for (var entry in _updatedStatuses.entries) {
+      await FirebaseFirestore.instance
+          .collection('practice_users')
+          .doc(entry.key)
+          .update({'status': entry.value});
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Updated status successfully!")),
+    );
+
+    setState(() {
+      _isChecking = false;
+      _updatedStatuses.clear();
+    });
   }
 }

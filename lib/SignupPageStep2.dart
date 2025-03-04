@@ -101,6 +101,7 @@ Future<void> _registerUser() async {
       'stu_faculty': facultyController.text,
       'stu_major': majorController.text,
       'stu_grade': selectedGrade,
+      'status': "",
       'role': "user", // ✅ กำหนดค่า role เป็น "user"
       'allowance': 0, // 🔥 เพิ่มค่าเริ่มต้น `allowance = 0`
       'createdAt': DateTime.now(),

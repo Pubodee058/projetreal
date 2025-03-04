@@ -1,38 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class Summarypracpage extends StatelessWidget {
-   final List<Map<String, dynamic>> paymentSummary = [
-    {
-      'date': '30 Dec 24',
-      'amount': '2000 B',
-      'attendees': 15,
-    },
-    // สามารถเพิ่มข้อมูลเพิ่มเติมได้ตามต้องการ
-  ];
-
-  final List<Map<String, dynamic>> history = [
-    {
-      'item': 'Practice item',
-      'date': '16 Dec 24',
-      'time': '15:00 - 15:30',
-      'attendees': 15,
-    },
-    {
-      'item': 'Practice item',
-      'date': '17 Dec 24',
-      'time': '16:00 - 16:30',
-      'attendees': 15,
-    },
-    {
-      'item': 'Practice item',
-      'date': '18 Dec 24',
-      'time': '17:00 - 17:30',
-      'attendees': 15,
-    },
-    // สามารถเพิ่มข้อมูลเพิ่มเติมได้ตามต้องการ
-  ];
   @override
- Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Practice History'),
@@ -42,38 +13,7 @@ class Summarypracpage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            // Payment Summary Section
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Payment Summary',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  // วนลูปข้อมูล Payment Summary
-                  ...paymentSummary.map((payment) {
-                    return Card(
-                      elevation: 1,
-                      margin: EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        title: Text(payment['date']),
-                        subtitle: Text('Total ${payment['attendees']} Attendee'),
-                        trailing: Text(payment['amount']),
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
-            ),
-            
-            // History Section
+            /// 🔹 **History Section**
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Column(
@@ -84,23 +24,11 @@ class Summarypracpage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Colors.redAccent,
                     ),
                   ),
                   SizedBox(height: 8),
-                  // วนลูปข้อมูล History
-                  ...history.map((event) {
-                    return Card(
-                      elevation: 1,
-                      margin: EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        leading: Icon(Icons.access_time),
-                        title: Text(event['item']),
-                        subtitle: Text('${event['date']} ${event['time']}'),
-                        trailing: Text('${event['attendees']} Attendee'),
-                      ),
-                    );
-                  }).toList(),
+                  _buildHistoryList(), // ✅ แสดงประวัติการฝึกซ้อม
                 ],
               ),
             ),
@@ -108,5 +36,79 @@ class Summarypracpage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// 📌 **ดึงข้อมูลประวัติ `practice` จาก Firestore**
+  Widget _buildHistoryList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('pratice') // ✅ เชื่อมต่อไปยัง `pratice`
+          .orderBy('prt_date', descending: true) // ✅ เรียงจากล่าสุดไปเก่าสุด
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(child: CircularProgressIndicator()); // ⏳ แสดงโหลดข้อมูล
+        }
+
+        var practices = snapshot.data!.docs;
+
+        if (practices.isEmpty) {
+          return Center(child: Text("No practice history available.")); // ไม่มีข้อมูล
+        }
+
+        return Column(
+          children: practices.map((doc) {
+            var practice = doc.data() as Map<String, dynamic>;
+
+            DateTime practiceDate =
+                (practice['prt_date'] as Timestamp).toDate(); // ✅ แปลงเป็น DateTime
+
+            return FutureBuilder<int>(
+              future: _getAttendeeCount(doc.id), // ✅ ดึงจำนวนคนเข้าร่วม
+              builder: (context, attendeeSnapshot) {
+                int attendeeCount = attendeeSnapshot.data ?? 0;
+
+                return Card(
+                  elevation: 1,
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    leading: Icon(Icons.access_time),
+                    title: Text(practice['prt_title'] ?? 'No Title'),
+                    subtitle: Text(
+                        '${_formatDate(practiceDate)} ${practice['prt_start_time']} - ${practice['prt_end_time']}'),
+                    trailing: Text(
+                      '$attendeeCount Attendee',
+                      style: TextStyle(color: Colors.teal),
+                    ),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  /// 📌 **ดึงจำนวนผู้เข้าร่วมฝึกซ้อมจาก `practice_users`**
+  Future<int> _getAttendeeCount(String practiceId) async {
+    QuerySnapshot query = await FirebaseFirestore.instance
+        .collection('practice_users')
+        .where('practice_id', isEqualTo: practiceId)
+        .get();
+    return query.docs.length;
+  }
+
+  /// 📌 **ฟังก์ชันแปลง `DateTime` เป็น String**
+  String _formatDate(DateTime dateTime) {
+    return "${dateTime.day} ${_monthAbbreviation(dateTime.month)} ${dateTime.year}";
+  }
+
+  /// 📌 **แปลงเลขเดือนเป็นตัวย่อ เช่น `Dec`**
+  String _monthAbbreviation(int month) {
+    List<String> months = [
+      "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    return months[month];
   }
 }

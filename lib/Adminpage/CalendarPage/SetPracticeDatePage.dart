@@ -21,35 +21,53 @@ class _SetPracticeDatePageState extends State<SetPracticeDatePage> {
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// 📌 ฟังก์ชันบันทึก `practice`
-  _savePractice() async {
-    if (_titleController.text.isEmpty ||
-        _startTime == null ||
-        _endTime == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("⚠️ กรุณากรอกข้อมูลให้ครบ!")));
-      return;
-    }
+ Future<void> _savePractice() async {
+  if (_titleController.text.isEmpty || _startTime == null || _endTime == null) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("⚠️ กรุณากรอกข้อมูลให้ครบ!")));
+    return;
+  }
 
-    await _firestore.collection('pratice').add({
+  try {
+    // ✅ เพิ่มข้อมูลกิจกรรมลง `practice`
+    DocumentReference practiceRef = await _firestore.collection('pratice').add({
       'prt_title': _titleController.text,
-      'prt_date':
-          Timestamp.fromDate(widget.selectedDate), // ✅ ล็อควันที่จากปฏิทิน
+      'prt_date': Timestamp.fromDate(widget.selectedDate),
       'prt_start_time': "${_startTime!.hour}:${_startTime!.minute}",
       'prt_end_time': "${_endTime!.hour}:${_endTime!.minute}",
       'prt_detail': _detailController.text,
       'prt_budget_ot': _budgetOTController.text.isNotEmpty
           ? double.tryParse(_budgetOTController.text)
-          : null, // ✅ สามารถเป็น `null`
+          : null,
       'prt_budget_late': _budgetLateController.text.isNotEmpty
           ? double.tryParse(_budgetLateController.text)
-          : null, // ✅ สามารถเป็น `null`
-      'pay_date': null, // ✅ ตั้งค่าเป็น `null` ไปก่อน
+          : null,
+      'created_at': Timestamp.now(),
     });
+
+    // ✅ ดึงรายชื่อผู้ใช้ทั้งหมดจาก `users` collection
+    QuerySnapshot userSnapshot = await _firestore.collection('users').get();
+
+    for (var userDoc in userSnapshot.docs) {
+      await _firestore.collection('practice_users').add({
+        'practice_id': practiceRef.id,
+        'prt_date': Timestamp.fromDate(widget.selectedDate),
+        'stu_firstname': userDoc['stu_firstname'],
+        'stu_lastname': userDoc['stu_lastname'],
+        'status': 'absent', // ✅ กำหนดค่าเริ่มต้น
+      });
+    }
 
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text("✅ บันทึกการฝึกซ้อมเรียบร้อย!")));
     Navigator.pop(context);
+  } catch (e) {
+    print("❌ Error saving practice: $e");
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("❌ ไม่สามารถบันทึกการฝึกซ้อมได้!")));
   }
+}
+
 
   /// 📌 UI ฟอร์ม
   @override
