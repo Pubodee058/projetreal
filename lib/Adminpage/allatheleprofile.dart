@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myproject/Adminpage/AdminAttendancePage.dart';
 import 'package:myproject/main.dart';
 
 class Allatheleprofile extends StatelessWidget {
@@ -17,9 +18,15 @@ class Allatheleprofile extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // ฟังก์ชันเมื่อกดปุ่ม
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AdminAttendancePage()),
+                  );
                 },
-                child: Text('ออกรายงานการซ้อม',style: TextStyle(color: Colors.black),),
+                child: Text(
+                  'ออกรายงานการซ้อม',
+                  style: TextStyle(color: Colors.black),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   minimumSize: Size(double.infinity, 50),
@@ -39,7 +46,10 @@ class Allatheleprofile extends StatelessWidget {
                             LoginPage()), // คุณต้องสร้างหน้า LoginPage
                   );
                 },
-                child: Text('Log out',style: TextStyle(color: Colors.black),),
+                child: Text(
+                  'Log out',
+                  style: TextStyle(color: Colors.black),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   minimumSize: Size(double.infinity, 50),
