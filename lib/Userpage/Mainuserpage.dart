@@ -14,7 +14,7 @@ class _MainuserpageState extends State<Mainuserpage> {
   // รายการหน้าในแต่ละแท็บ
   final List<Widget> _pages = [
     UserSchedulePage(),
-    Summarypracuserpage(),
+    UserPracticeHistoryPage(),
     Profileuserpage()
   ];
 
