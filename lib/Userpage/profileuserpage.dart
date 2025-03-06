@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:myproject/Userpage/EditProfilePage.dart';
 import 'package:myproject/main.dart';
 
 class Profileuserpage extends StatefulWidget {
@@ -128,8 +129,10 @@ class _ProfileuserpageState extends State<Profileuserpage> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          // Logic to Edit Profile
-                          print('Edit Profile');
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => EditProfilePage()));
                         },
                         child: Text('Edit'),
                         style: ElevatedButton.styleFrom(
