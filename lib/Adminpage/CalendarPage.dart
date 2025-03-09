@@ -141,6 +141,7 @@ void _deletePractice(String id, DateTime practiceDate) async {
   @override
   Widget build(BuildContext context) {
   return Scaffold(
+    backgroundColor: Colors.white,
     appBar: AppBar(title: Text('Schedule'), backgroundColor: Colors.redAccent),
     body: Column(
       children: [

@@ -25,7 +25,8 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
 
   /// 📌 ดึงข้อมูลของ `Practice`
   Future<void> _fetchPracticeDetails() async {
-    DocumentSnapshot doc = await _firestore.collection('pratice').doc(widget.practiceId).get();
+    DocumentSnapshot doc =
+        await _firestore.collection('pratice').doc(widget.practiceId).get();
     if (doc.exists) {
       setState(() {
         practiceData = doc.data() as Map<String, dynamic>;
@@ -42,7 +43,8 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
 
     List<Map<String, dynamic>> attendeeList = [];
     for (var doc in snapshot.docs) {
-      var userDoc = await _firestore.collection('users').doc(doc['user_id']).get();
+      var userDoc =
+          await _firestore.collection('users').doc(doc['user_id']).get();
       if (userDoc.exists) {
         attendeeList.add({
           'name': "${userDoc['stu_firstname']} ${userDoc['stu_lastname']}",
@@ -59,15 +61,20 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
   Widget build(BuildContext context) {
     if (practiceData == null) {
       return Scaffold(
-        appBar: AppBar(title: Text("Practice Detail"), backgroundColor: Colors.redAccent),
+        appBar: AppBar(
+            title: Text("Practice Detail"), backgroundColor: Colors.red[700]),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text("Practice Detail"), backgroundColor: Colors.redAccent),
+      appBar: AppBar(
+        title: Text("Practice Detail"),
+        backgroundColor: Colors.red[700], // สีแดงเข้ม
+        elevation: 0, // ลบเงา
+      ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -77,13 +84,21 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
               children: [
                 Text(
                   practiceData!['prt_title'],
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.redAccent),
                 ),
                 Row(
                   children: [
-                    Text(DateFormat('dd MMM yyyy').format((practiceData!['prt_date'] as Timestamp).toDate())),
+                    Text(
+                      DateFormat('dd MMM yyyy').format(
+                          (practiceData!['prt_date'] as Timestamp).toDate()),
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
                     SizedBox(width: 5),
-                    Icon(Icons.edit, color: Colors.brown), // ไว้รองรับฟังก์ชันอัปเดต
+                    Icon(Icons.edit,
+                        color: Colors.brown), // ไว้รองรับฟังก์ชันอัปเดต
                   ],
                 ),
               ],
@@ -96,31 +111,47 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
             SizedBox(height: 10),
 
             /// 🔹 Description
-            Text(
-              practiceData!['prt_detail'],
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                practiceData!['prt_detail'],
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
             ),
             SizedBox(height: 10),
 
             /// 🔹 Budget
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("On-time: ${practiceData!['prt_budget_ot']} B"),
-                Text("Late: ${practiceData!['prt_budget_late']} B"),
+                Expanded(
+                  child: Text("On-time: ${practiceData!['prt_budget_ot']} B"),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text("Late: ${practiceData!['prt_budget_late']} B"),
+                ),
               ],
             ),
+
             SizedBox(height: 20),
 
             /// 🔹 Attendee List
             Text(
               "Attendee List",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent),
             ),
             SizedBox(height: 10),
 
             attendees.isEmpty
-                ? Text("No attendees yet.", style: TextStyle(color: Colors.grey))
+                ? Text("No attendees yet.",
+                    style: TextStyle(color: Colors.grey))
                 : Column(
                     children: attendees.map((attendee) {
                       return Padding(
@@ -132,8 +163,17 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: Colors.grey[300]!),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                blurRadius: 3,
+                                spreadRadius: 1,
+                                offset: Offset(0, 2),
+                              )
+                            ],
                           ),
-                          child: Text(attendee['name']),
+                          child: Text(attendee['name'],
+                              style: TextStyle(fontSize: 16)),
                         ),
                       );
                     }).toList(),
@@ -146,7 +186,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete, color: Colors.red[700]),
                   onPressed: () {
                     // ✅ ฟังก์ชันลบจะเพิ่มภายหลัง
                   },
@@ -155,15 +195,23 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                   onPressed: () {
                     // ✅ ฟังก์ชัน Recheck จะเพิ่มภายหลัง
                   },
-                  child: Text("Check"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
+                  ),
+                  child: Text(
+                    "Check",
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                 ),
               ],
             ),
+            SizedBox(height: 10),
           ],
         ),
       ),

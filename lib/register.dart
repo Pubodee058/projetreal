@@ -62,9 +62,11 @@ class _RegisterState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        title: Text('สมัครสมาชิค'),
+        backgroundColor: Colors.red,
+        title: Text('สมัครสมาชิค',style: TextStyle(color: Colors.white),),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -77,7 +79,7 @@ class _RegisterState extends State<Register> {
             //     border: OutlineInputBorder(),
             //   ),
             // ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.01),
             TextField(
               controller: emailController,
               decoration: InputDecoration(
@@ -85,7 +87,7 @@ class _RegisterState extends State<Register> {
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.015),
             TextField(
               controller: passwordController,
               obscureText: true,
@@ -94,12 +96,21 @@ class _RegisterState extends State<Register> {
                 border: OutlineInputBorder(),
               ),
             ),
+            SizedBox(height: size.height * 0.015),
             isLoading
                 ? CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _goToNextPage,
-                    child: Text('Next'),
-                  ),
+                : SizedBox(
+                  width: size.width * 0.85,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                    ),
+                      onPressed: _goToNextPage,
+                      child: Text('Next',style: TextStyle(
+                        color: Colors.white,fontSize: 16
+                      ),),
+                    ),
+                ),
             // SizedBox(height: 20),
             // ElevatedButton(
             //   onPressed: _goToNextPage,

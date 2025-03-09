@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 
 class UserPracticeHistoryPage extends StatefulWidget {
   @override
-  _UserPracticeHistoryPageState createState() => _UserPracticeHistoryPageState();
+  _UserPracticeHistoryPageState createState() =>
+      _UserPracticeHistoryPageState();
 }
 
 class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
@@ -26,20 +27,21 @@ class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
   Future<void> _fetchUserData() async {
     if (user == null) return;
 
-    DocumentSnapshot userDoc = await _firestore.collection('users').doc(user!.uid).get();
+    DocumentSnapshot userDoc =
+        await _firestore.collection('users').doc(user!.uid).get();
 
-    if (userDoc.exists) {
+    if (userDoc.exists && mounted) {
+      // ✅ เช็ค mounted ก่อนเรียก setState()
       setState(() {
         stuFirstName = userDoc['stu_firstname'];
         stuLastName = userDoc['stu_lastname'];
-        totalCredit = (userDoc['allowance'] ?? 0).toDouble(); // ✅ ดึง `allowance` ถ้าไม่มีให้เป็น `0`
+        totalCredit = (userDoc['allowance'] ?? 0).toDouble();
       });
 
-      _fetchPracticeHistory(); // ดึงประวัติการเข้าร่วมหลังจากได้ข้อมูลชื่อแล้ว
+      _fetchPracticeHistory();
     }
   }
 
-  /// 📌 ดึงข้อมูลประวัติการเข้าร่วมของ User
   Future<void> _fetchPracticeHistory() async {
     if (stuFirstName == null || stuLastName == null) return;
 
@@ -52,20 +54,29 @@ class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
 
     List<Map<String, dynamic>> fetchedData = await Future.wait(
       query.docs.map((doc) async {
-        DocumentSnapshot practiceDoc = await _firestore.collection('pratice').doc(doc['practice_id']).get();
+        DocumentSnapshot practiceDoc = await _firestore
+            .collection('pratice')
+            .doc(doc['practice_id'])
+            .get();
         return {
-          'title': practiceDoc.exists ? practiceDoc['prt_title'] : 'Unknown Practice',
+          'title': practiceDoc.exists
+              ? practiceDoc['prt_title']
+              : 'Unknown Practice',
           'date': (doc['prt_date'] as Timestamp).toDate(),
-          'start_time': practiceDoc.exists ? practiceDoc['prt_start_time'] : 'N/A',
+          'start_time':
+              practiceDoc.exists ? practiceDoc['prt_start_time'] : 'N/A',
           'end_time': practiceDoc.exists ? practiceDoc['prt_end_time'] : 'N/A',
-          'status': doc['status'], // ดึงสถานะมาเพื่อเปลี่ยนสีการ์ด
+          'status': doc['status'],
         };
       }).toList(),
     );
 
-    setState(() {
-      practiceHistory = fetchedData;
-    });
+    if (mounted) {
+      // ✅ เช็ค mounted ก่อนเรียก setState()
+      setState(() {
+        practiceHistory = fetchedData;
+      });
+    }
   }
 
   /// 📌 ฟังก์ชันกำหนดสีของการ์ดตาม `status`
@@ -115,7 +126,10 @@ class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
             ),
             Text(
               "${totalCredit.toStringAsFixed(0)} Baht", // ✅ แสดงค่า allowance
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.redAccent),
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent),
             ),
 
             SizedBox(height: 16),
@@ -137,14 +151,17 @@ class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
                       itemBuilder: (context, index) {
                         var practice = practiceHistory[index];
                         return Card(
-                          color: _getCardColor(practice['status']), // เปลี่ยนสีการ์ดตาม `status`
+                          color: _getCardColor(
+                              practice['status']), // เปลี่ยนสีการ์ดตาม `status`
                           margin: EdgeInsets.symmetric(vertical: 8),
                           child: ListTile(
                             title: Text(practice['title']),
                             subtitle: Text(
                               "${DateFormat('dd MMM yy').format(practice['date'])} "
                               "${practice['start_time']} - ${practice['end_time']}  ",
-                              style: TextStyle(color: _getTextColor(practice['status'])), // เปลี่ยนสีตัวอักษร
+                              style: TextStyle(
+                                  color: _getTextColor(
+                                      practice['status'])), // เปลี่ยนสีตัวอักษร
                             ),
                             trailing: Text(
                               practice['status'] == 'on_time'
@@ -152,7 +169,8 @@ class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
                                   : practice['status'] == 'late'
                                       ? "⚠️"
                                       : "❌",
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                           ),
                         );

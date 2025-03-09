@@ -97,15 +97,24 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-        backgroundColor: Colors.blueAccent,
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Login'),
+      //   backgroundColor: Colors.redAccent,
+      // ),
       body: Padding(
         padding: EdgeInsets.all(size.height * 0.01),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Container(
+              margin: EdgeInsets.only(bottom: size.height * 0.05),
+              child: Image.asset(
+                "assets/images/skrulogo.png"
+              ),
+            ),
+            SizedBox(
+              height: size.height * 0.01,
+            ),
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -125,10 +134,18 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: size.height * 0.02),
             isLoading
                 ? CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _login,
-                    child: Text('Login'),
-                  ),
+                : SizedBox(
+                  width: size.width * 0.99,
+                  height: size.height * 0.05,
+                  child: ElevatedButton(
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white
+                      ),
+                      child: Text('Login',style: TextStyle(fontSize: 18),),
+                    ),
+                ),
             SizedBox(height: size.height * 0.01),
             GestureDetector(
               onTap: () {
@@ -144,11 +161,12 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     'สมัครสมาชิก',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: Colors.redAccent,
                       fontSize: 16,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.white,
-                      decorationThickness: 2,
+                      fontWeight: FontWeight.bold,
+                      // decoration: TextDecoration.underline,
+                      // decorationColor: Colors.white,
+                      // decorationThickness: 2,
                     ),
                   ),
                 ),

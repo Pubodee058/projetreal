@@ -131,9 +131,11 @@ Future<void> _registerUser() async {
 
   @override
   Widget build(BuildContext context) {
+    var size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign Up - Step 2'),
+        backgroundColor: Colors.redAccent,
+        title: Text('Sign Up ',style: TextStyle(color: Colors.white),),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -144,25 +146,25 @@ Future<void> _registerUser() async {
               decoration: InputDecoration(
                   labelText: 'ชื่อจริง', border: OutlineInputBorder()),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.01),
             TextField(
               controller: lastNameController,
               decoration: InputDecoration(
                   labelText: 'นามสกุล', border: OutlineInputBorder()),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.01),
             TextField(
               controller: phoneNumberController,
               decoration: InputDecoration(
                   labelText: 'เบอร์โทรศัพท์', border: OutlineInputBorder()),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.01),
             TextField(
               controller: studentIdController,
               decoration: InputDecoration(
                   labelText: 'รหัสนักศึกษา', border: OutlineInputBorder()),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.01),
             TextField(
               controller: birthDateController,
               readOnly: true, // ✅ ป้องกันไม่ให้ผู้ใช้พิมพ์เอง
@@ -177,25 +179,26 @@ Future<void> _registerUser() async {
                 ),
               ),
             ),
+            SizedBox(height: size.height * 0.01),
             TextField(
               controller: facultyController,
               decoration: InputDecoration(
                   labelText: 'คณะ', border: OutlineInputBorder()),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.01),
             TextField(
               controller: majorController,
               decoration: InputDecoration(
                   labelText: 'สาขา', border: OutlineInputBorder()),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: size.height * 0.01),
             DropdownButtonFormField<int>(
               decoration: InputDecoration(
                 labelText: "ระดับชั้น",
                 border: OutlineInputBorder(),
               ),
               value: selectedGrade,
-              items: [
+              items: const [
                 DropdownMenuItem(value: 1, child: Text("ปี 1")),
                 DropdownMenuItem(value: 2, child: Text("ปี 2")),
                 DropdownMenuItem(value: 3, child: Text("ปี 3")),
@@ -210,12 +213,21 @@ Future<void> _registerUser() async {
                     "ระดับชั้นที่เลือก: $selectedGrade"); // ✅ ตรวจสอบค่าใน console
               },
             ),
+            SizedBox(height: size.height * 0.01),
             isLoading
                 ? CircularProgressIndicator() // แสดง Loading ขณะกำลังบันทึกข้อมูล
-                : ElevatedButton(
-                    onPressed: _registerUser, // เรียกใช้งานฟังก์ชันสมัครสมาชิก
-                    child: Text("สมัครสมาชิก"),
-                  ),
+                : SizedBox(
+                  width: size.width * 0.85,
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent
+                      ),
+                      onPressed: _registerUser, // เรียกใช้งานฟังก์ชันสมัครสมาชิก
+                      child: Text("สมัครสมาชิก",style: TextStyle(
+                        color: Colors.white, fontSize: 16,fontWeight: FontWeight.bold
+                      ),),
+                    ),
+                ),
           ],
         ),
       ),
