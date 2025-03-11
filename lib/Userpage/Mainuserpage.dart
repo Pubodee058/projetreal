@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:myproject/Userpage/UserSchedulePage.dart';
 import 'package:myproject/Userpage/profileuserpage.dart';
 import 'package:myproject/Userpage/summaryparcpage.dart';
+import 'package:myproject/constant.dart';
 
 class Mainuserpage extends StatefulWidget {
   @override
@@ -32,9 +33,9 @@ class _MainuserpageState extends State<Mainuserpage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.white54,
-        backgroundColor: Colors.blue,
+        selectedItemColor: red,
+        unselectedItemColor: Colors.black54,
+        backgroundColor: Colors.white,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),

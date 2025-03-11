@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:myproject/constant.dart';
 
 class Summarypracpage extends StatelessWidget {
   @override
@@ -7,8 +8,10 @@ class Summarypracpage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Practice History'),
-        backgroundColor: Colors.redAccent,
+        title: Text('Practice History',style: TextStyle(
+          color: Colors.white
+        ),),
+        backgroundColor: red,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -25,7 +28,7 @@ class Summarypracpage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.redAccent,
+                      color: red,
                     ),
                   ),
                   SizedBox(height: 8),

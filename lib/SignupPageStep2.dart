@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:myproject/constant.dart';
 import 'package:myproject/main.dart';
 
 class SignupPageStep2 extends StatefulWidget {
@@ -134,7 +135,7 @@ Future<void> _registerUser() async {
     var size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.redAccent,
+        backgroundColor: red,
         title: Text('Sign Up ',style: TextStyle(color: Colors.white),),
       ),
       body: SingleChildScrollView(
@@ -220,7 +221,7 @@ Future<void> _registerUser() async {
                   width: size.width * 0.85,
                   child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent
+                        backgroundColor: red
                       ),
                       onPressed: _registerUser, // เรียกใช้งานฟังก์ชันสมัครสมาชิก
                       child: Text("สมัครสมาชิก",style: TextStyle(

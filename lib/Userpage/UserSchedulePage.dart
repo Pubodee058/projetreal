@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myproject/Userpage/PracticeuserDetailPage.dart';
 import 'package:myproject/Userpage/eventuserdetail.dart';
+import 'package:myproject/constant.dart';
 
 class UserSchedulePage extends StatefulWidget {
   @override
@@ -134,9 +135,9 @@ Widget buildJoinCancelButton(Map<String, dynamic> practice) {
           // ✅ รีโหลดข้อมูลใหม่ให้ FutureBuilder
           setState(() {}); // 🔄 บังคับให้ UI อัปเดต
         },
-        child: Text(isJoined ? "Cancel" : "Join"),
+        child: Text(isJoined ? "Cancel" : "Join",style: TextStyle(color: Colors.white),),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isJoined ? Colors.grey : Colors.redAccent,
+          backgroundColor: isJoined ? Colors.grey : red,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
       );
@@ -264,8 +265,8 @@ Future<void> _cancelPractice(DateTime practiceDate) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Schedule'),
-        backgroundColor: Colors.redAccent,
+        title: Text('Schedule',style: TextStyle(color: Colors.white),),
+        backgroundColor: red,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -326,7 +327,7 @@ Future<void> _cancelPractice(DateTime practiceDate) async {
       child: Text(
         title,
         style: TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent),
+            fontSize: 18, fontWeight: FontWeight.bold, color: red),
       ),
     );
   }
@@ -340,12 +341,11 @@ Future<void> _cancelPractice(DateTime practiceDate) async {
   }
 
   /// 📌 Card สำหรับ Practice
-/// 📌 Card สำหรับ Practice
 Widget _buildPracticeCard(Map<String, dynamic> practice, bool isToday) {
   return Card(
     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     child: ListTile(
-      leading: Icon(Icons.access_time, color: Colors.deepOrangeAccent),
+      leading: Icon(Icons.access_time, color: red),
       title: Text(practice['title']),
       subtitle: Text(
           '${_formatDate(practice['date'])} - ${practice['start_time']}\n${practice['detail']}'),
@@ -360,7 +360,7 @@ Widget _buildPracticeCard(Map<String, dynamic> practice, bool isToday) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
-        leading: Icon(Icons.announcement, color: Colors.redAccent),
+        leading: Icon(Icons.announcement, color: red),
         title: Text(announcement['title']),
         subtitle: Text(
             '${_formatDate(announcement['date'])}\n${announcement['detail']}'),

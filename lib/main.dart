@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:myproject/Adminpage/Adminpage.dart';
 import 'package:myproject/Userpage/Mainuserpage.dart';
+import 'package:myproject/constant.dart';
 import 'package:myproject/register.dart';
 
 void main() async {
@@ -140,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: ElevatedButton(
                       onPressed: _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: red,
                         foregroundColor: Colors.white
                       ),
                       child: Text('Login',style: TextStyle(fontSize: 18),),
@@ -161,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     'สมัครสมาชิก',
                     style: TextStyle(
-                      color: Colors.redAccent,
+                      color: red,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       // decoration: TextDecoration.underline,

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:myproject/Userpage/profileuserpage.dart';
+import 'package:myproject/constant.dart';
 
 class EditProfilePage extends StatefulWidget {
   @override
@@ -135,8 +136,8 @@ Future<void> _updateOtherCollections(
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Edit Profile"),
-        backgroundColor: Colors.orangeAccent,
+        title: Text("Edit Profile",style: TextStyle(color: Colors.white),),
+        backgroundColor: red,
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator()) // แสดงโหลดข้อมูล
@@ -225,9 +226,11 @@ Future<void> _updateOtherCollections(
                     /// 🔹 **Save Button**
                     ElevatedButton(
                       onPressed: _saveProfile,
-                      child: Text("Save"),
+                      child: Text("Save",style: TextStyle(
+                        color: Colors.white
+                      ),),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orangeAccent,
+                        backgroundColor: red,
                         minimumSize: Size(double.infinity, 50),
                       ),
                     ),

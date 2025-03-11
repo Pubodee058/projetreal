@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:myproject/Adminpage/CalendarPage.dart';
 import 'package:myproject/Adminpage/allatheleprofile.dart';
 import 'package:myproject/Adminpage/summarypracpage.dart';
+import 'package:myproject/constant.dart';
 
 class AdminPage extends StatefulWidget {
   @override
@@ -32,7 +33,7 @@ class _AdminPageState extends State<AdminPage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        selectedItemColor: Colors.red, // สีของไอคอนที่เลือก
+        selectedItemColor: red, // สีของไอคอนที่เลือก
         unselectedItemColor: Colors.black54, // สีของไอคอนที่ไม่ได้เลือก
         backgroundColor: Colors.white, // พื้นหลังแถบเมนู
         type: BottomNavigationBarType.fixed, // ทำให้ไอคอนไม่ขยับ
@@ -65,7 +66,7 @@ class _AdminPageState extends State<AdminPage> {
         color: Colors.red.shade50, // สีพื้นหลังไอคอนที่ถูกเลือก
         borderRadius: BorderRadius.circular(20), // ทำให้เป็นวงรี
       ),
-      child: Icon(icon, color: Colors.red), // ไอคอนสีแดงเมื่อถูกเลือก
+      child: Icon(icon, color: red), // ไอคอนสีแดงเมื่อถูกเลือก
     );
   }
 }

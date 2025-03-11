@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myproject/Adminpage/AdminAttendancePage.dart';
+import 'package:myproject/constant.dart';
 import 'package:myproject/main.dart';
 
 class Allatheleprofile extends StatelessWidget {
@@ -7,8 +8,10 @@ class Allatheleprofile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Setting'),
-        backgroundColor: Colors.redAccent,
+        title: Text('Setting',style: TextStyle(
+          color: Colors.white
+        ),),
+        backgroundColor: red,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -25,10 +28,10 @@ class Allatheleprofile extends StatelessWidget {
                 },
                 child: Text(
                   'ออกรายงานการซ้อม',
-                  style: TextStyle(color: Colors.black),
+                  style: TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: red,
                   minimumSize: Size(double.infinity, 50),
                 ),
               ),
@@ -48,10 +51,10 @@ class Allatheleprofile extends StatelessWidget {
                 },
                 child: Text(
                   'Log out',
-                  style: TextStyle(color: Colors.black),
+                  style: TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: red,
                   minimumSize: Size(double.infinity, 50),
                 ),
               ),

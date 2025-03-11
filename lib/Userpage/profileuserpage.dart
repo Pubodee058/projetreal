@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:myproject/Userpage/EditProfilePage.dart';
+import 'package:myproject/constant.dart';
 import 'package:myproject/main.dart';
 
 class Profileuserpage extends StatefulWidget {
@@ -64,8 +65,10 @@ class _ProfileuserpageState extends State<Profileuserpage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Setting'),
-        backgroundColor: Colors.redAccent,
+        title: Text('Setting',style: TextStyle(
+          color: Colors.white
+        ),),
+        backgroundColor: red,
       ),
       body: isLoading
           ? Center(
@@ -98,7 +101,7 @@ class _ProfileuserpageState extends State<Profileuserpage> {
                         Text(
                           '$firstName $lastName', // ✅ แสดงชื่อจริงและนามสกุล
                           style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold),
+                              fontSize: 22, fontWeight: FontWeight.bold,color: red),
                         ),
                         SizedBox(height: 4),
                         Text(
@@ -134,9 +137,11 @@ class _ProfileuserpageState extends State<Profileuserpage> {
                               MaterialPageRoute(
                                   builder: (context) => EditProfilePage()));
                         },
-                        child: Text('Edit'),
+                        child: Text('Edit',style: TextStyle(
+                          color: Colors.black
+                        ),),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orangeAccent,
+                          backgroundColor: Colors.grey[300],
                           minimumSize: Size(100, 50),
                         ),
                       ),
@@ -162,9 +167,11 @@ class _ProfileuserpageState extends State<Profileuserpage> {
                             );
                           }
                         },
-                        child: Text('Log out'),
+                        child: Text('Log out',style: TextStyle(
+                          color: Colors.white
+                        ),),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: red,
                           minimumSize: Size(100, 50),
                         ),
                       ),

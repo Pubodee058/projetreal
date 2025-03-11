@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/constant.dart';
 
 class PracticeDetailPage extends StatefulWidget {
   final String practiceId;
@@ -62,7 +63,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
     if (practiceData == null) {
       return Scaffold(
         appBar: AppBar(
-            title: Text("Practice Detail"), backgroundColor: Colors.red[700]),
+            title: Text("Practice Detail"), backgroundColor: red),
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -70,7 +71,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Practice Detail"),
-        backgroundColor: Colors.red[700], // สีแดงเข้ม
+        backgroundColor: red, // สีแดงเข้ม
         elevation: 0, // ลบเงา
       ),
       body: Padding(
@@ -87,7 +88,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                   style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.redAccent),
+                      color: red),
                 ),
                 Row(
                   children: [
@@ -145,7 +146,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.redAccent),
+                  color: red),
             ),
             SizedBox(height: 10),
 
@@ -186,7 +187,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red[700]),
+                  icon: Icon(Icons.delete, color: red),
                   onPressed: () {
                     // ✅ ฟังก์ชันลบจะเพิ่มภายหลัง
                   },
@@ -196,7 +197,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                     // ✅ ฟังก์ชัน Recheck จะเพิ่มภายหลัง
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: red,
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),

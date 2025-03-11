@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/constant.dart';
 
 class UserPracticeHistoryPage extends StatefulWidget {
   @override
@@ -111,8 +112,8 @@ class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Practice History'),
-        backgroundColor: Colors.redAccent,
+        title: Text('Practice History',style: TextStyle(color: Colors.white),),
+        backgroundColor: red,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -129,7 +130,7 @@ class _UserPracticeHistoryPageState extends State<UserPracticeHistoryPage> {
               style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.redAccent),
+                  color: red),
             ),
 
             SizedBox(height: 16),

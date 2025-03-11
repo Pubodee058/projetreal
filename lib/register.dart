@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:myproject/SignupPageStep2.dart';
+import 'package:myproject/constant.dart';
 
 class Register extends StatefulWidget {
   @override
@@ -65,8 +66,8 @@ class _RegisterState extends State<Register> {
     var size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.red,
-        title: Text('สมัครสมาชิค',style: TextStyle(color: Colors.white),),
+        backgroundColor: red,
+        title: Text('สมัครสมาชิก',style: TextStyle(color: Colors.white),),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -103,7 +104,7 @@ class _RegisterState extends State<Register> {
                   width: size.width * 0.85,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
+                      backgroundColor: red,
                     ),
                       onPressed: _goToNextPage,
                       child: Text('Next',style: TextStyle(
