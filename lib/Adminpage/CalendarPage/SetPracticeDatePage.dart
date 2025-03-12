@@ -21,7 +21,7 @@ class _SetPracticeDatePageState extends State<SetPracticeDatePage> {
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// 📌 ฟังก์ชันบันทึก `practice`
- Future<void> _savePractice() async {
+Future<void> _savePractice() async {
   if (_titleController.text.isEmpty || _startTime == null || _endTime == null) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text("⚠️ กรุณากรอกข้อมูลให้ครบ!")));
@@ -30,7 +30,7 @@ class _SetPracticeDatePageState extends State<SetPracticeDatePage> {
 
   try {
     // ✅ เพิ่มข้อมูลกิจกรรมลง `practice`
-    DocumentReference practiceRef = await _firestore.collection('pratice').add({
+    DocumentReference practiceRef = await FirebaseFirestore.instance.collection('pratice').add({
       'prt_title': _titleController.text,
       'prt_date': Timestamp.fromDate(widget.selectedDate),
       'prt_start_time': "${_startTime!.hour}:${_startTime!.minute}",
@@ -42,24 +42,30 @@ class _SetPracticeDatePageState extends State<SetPracticeDatePage> {
       'prt_budget_late': _budgetLateController.text.isNotEmpty
           ? double.tryParse(_budgetLateController.text)
           : null,
-      'created_at': Timestamp.now(),
+      'pay_date': null,
+      'checked': false,
     });
 
-    // ✅ ดึงรายชื่อผู้ใช้ทั้งหมดจาก `users` collection
-    QuerySnapshot userSnapshot = await _firestore.collection('users').get();
+    // ✅ ดึงรายชื่อผู้ใช้ทั้งหมดจาก `users` Collection
+    QuerySnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').get();
 
+    // ✅ เพิ่มผู้ใช้แต่ละคนไปที่ `practice_users`
+    WriteBatch batch = FirebaseFirestore.instance.batch();
     for (var userDoc in userSnapshot.docs) {
-      await _firestore.collection('practice_users').add({
+      batch.set(FirebaseFirestore.instance.collection('practice_users').doc(), {
         'practice_id': practiceRef.id,
         'prt_date': Timestamp.fromDate(widget.selectedDate),
+        'user_id': userDoc['user_id'],
         'stu_firstname': userDoc['stu_firstname'],
         'stu_lastname': userDoc['stu_lastname'],
-        'status': 'absent', // ✅ กำหนดค่าเริ่มต้น
+        'status': 'absent', // ✅ สถานะเริ่มต้น
       });
     }
+    await batch.commit();
 
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text("✅ บันทึกการฝึกซ้อมเรียบร้อย!")));
+
     Navigator.pop(context);
   } catch (e) {
     print("❌ Error saving practice: $e");
@@ -67,7 +73,6 @@ class _SetPracticeDatePageState extends State<SetPracticeDatePage> {
         .showSnackBar(SnackBar(content: Text("❌ ไม่สามารถบันทึกการฝึกซ้อมได้!")));
   }
 }
-
 
   /// 📌 UI ฟอร์ม
   @override

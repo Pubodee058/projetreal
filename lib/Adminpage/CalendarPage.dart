@@ -46,45 +46,36 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   /// 📌 ดึง `practice` ตามวันที่เลือก
-  Stream<List<Map<String, dynamic>>> _getPractices() {
-    return _firestore
-        .collection('pratice') // ✅ ตรวจสอบให้แน่ใจว่าสะกดตรงกับ Firestore
-        .orderBy('prt_date', descending: false)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        try {
-          // ✅ ตรวจสอบและแปลง `prt_date` ให้เป็น `DateTime`
-          DateTime practiceDate;
-          if (doc['prt_date'] is Timestamp) {
-            practiceDate = (doc['prt_date'] as Timestamp).toDate();
-          } else if (doc['prt_date'] is String) {
-            practiceDate = DateTime.parse(doc['prt_date']);
-          } else {
-            throw Exception("Invalid prt_date format: ${doc['prt_date']}");
-          }
+Stream<List<Map<String, dynamic>>> _getPractices() {
+  return _firestore
+      .collection('pratice')
+      .orderBy('prt_date', descending: false)
+      .snapshots()
+      .map((snapshot) {
+    return snapshot.docs
+        .where((doc) => doc.data().containsKey('checked') ? doc['checked'] == false : false) // ✅ กรองด้วย Dart
+        .map((doc) {
+      DateTime practiceDate;
+      if (doc['prt_date'] is Timestamp) {
+        practiceDate = (doc['prt_date'] as Timestamp).toDate();
+      } else if (doc['prt_date'] is String) {
+        practiceDate = DateTime.parse(doc['prt_date']);
+      } else {
+        practiceDate = DateTime.now(); // สำรองถ้า format ไม่ตรง
+      }
 
-          // ✅ ใช้ `??` เพื่อป้องกัน `null`
-          return {
-            'id': doc.id,
-            'title': doc.data().containsKey('prt_title')
-                ? doc['prt_title'] ?? "No Title"
-                : "No Title",
-            'date': practiceDate,
-            'start_time': doc.data().containsKey('prt_start_time')
-                ? doc['prt_start_time'] ?? "No Time"
-                : "No Time",
-            'detail': doc.data().containsKey('prt_detail')
-                ? doc['prt_detail'] ?? "No Details"
-                : "No Details",
-          };
-        } catch (e) {
-          print("❌ Error parsing practice: ${doc.id} - $e");
-          return <String, dynamic>{}; // ✅ คืนค่า Map ว่างในกรณีที่มีข้อผิดพลาด
-        }
-      }).toList();
-    });
-  }
+      return {
+        'id': doc.id,
+        'title': doc['prt_title'] ?? "No Title",
+        'date': practiceDate,
+        'start_time': doc['prt_start_time'] ?? "No Time",
+        'detail': doc['prt_detail'] ?? "No Details",
+      };
+    }).toList();
+  });
+}
+
+
 
   /// 📌 ลบ `announcement` และอัปเดต UI
   void _deleteAnnouncement(String id) async {

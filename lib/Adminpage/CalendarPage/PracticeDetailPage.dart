@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/Adminpage/CalendarPage.dart';
 
 class PracticeDetailPage extends StatefulWidget {
   final String practiceId;
@@ -260,6 +261,22 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                         ),
                       ),
                     ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _finishJob,
+                      child: Text(
+                        "Job Finish",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -340,6 +357,78 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
     );
   }
 
+ void _finishJob() async {
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    // ดึงข้อมูลผู้เข้าร่วมทั้งหมดของ practice นี้
+    QuerySnapshot practiceUsers = await firestore
+        .collection('practice_users')
+        .where('practice_id', isEqualTo: widget.practiceId)
+        .get();
+
+    // ดึงข้อมูลของ practice ที่เกี่ยวข้อง
+    DocumentSnapshot practiceDoc =
+        await firestore.collection('pratice').doc(widget.practiceId).get();
+
+    if (!practiceDoc.exists) {
+      print("❌ Practice document not found!");
+      return;
+    }
+
+    double budgetOT = (practiceDoc['prt_budget_ot'] ?? 0).toDouble();
+    double budgetLate = (practiceDoc['prt_budget_late'] ?? 0).toDouble();
+
+    WriteBatch batch = firestore.batch();
+
+    for (var doc in practiceUsers.docs) {
+      String userId = doc['user_id'];
+      String status = doc['status'];
+      String stuFirstName = doc['stu_firstname'];
+
+      // ค้นหาผู้ใช้จากตาราง users ที่มี user_id และ stu_firstname ตรงกัน
+      QuerySnapshot userSnapshot = await firestore
+          .collection('users')
+          .where('user_id', isEqualTo: userId)
+          .where('stu_firstname', isEqualTo: stuFirstName)
+          .get();
+
+      if (userSnapshot.docs.isNotEmpty) {
+        DocumentReference userRef = userSnapshot.docs.first.reference;
+
+        // อัปเดต allowance ตาม status ของผู้ใช้
+        if (status == "on_time") {
+          batch.update(userRef, {'allowance': FieldValue.increment(budgetOT)});
+        } else if (status == "late") {
+          batch.update(userRef, {'allowance': FieldValue.increment(budgetLate)});
+        }
+      }
+    }
+
+    // อัปเดตว่า practice นี้ถูกเช็คเสร็จแล้ว
+    batch.update(
+        firestore.collection('pratice').doc(widget.practiceId),
+        {'checked': true});
+
+    await batch.commit();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Job Finished Successfully!")),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => CalendarPage()),
+    );
+  } catch (e) {
+    print("❌ Error finishing job: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Failed to finish job: $e")),
+    );
+  }
+}
+
+
   /// 🔹 **ฟังก์ชันอัปเดตค่า `status` ชั่วคราวใน UI**
   void _updateTempStatus(String docId, String status) {
     setState(() {
@@ -348,21 +437,88 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
   }
 
   /// 🔹 **ฟังก์ชันบันทึก `status` กลับไปที่ Firestore**
-  void _saveStatuses() async {
+void _saveStatuses() async {
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
     for (var entry in _updatedStatuses.entries) {
-      await FirebaseFirestore.instance
-          .collection('practice_users')
-          .doc(entry.key)
-          .update({'status': entry.value});
+      // อัปเดตสถานะของ user ใน practice_users
+      await firestore.collection('practice_users').doc(entry.key).update({
+        'status': entry.value
+      });
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ Updated status successfully!")),
+      SnackBar(content: Text("✅ Updated statuses successfully!"))
     );
 
     setState(() {
       _isChecking = false;
       _updatedStatuses.clear();
     });
+
+  } catch (e) {
+    print("❌ Error saving statuses: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Failed to save statuses: $e"))
+    );
   }
+}
+
+
+//   Future<void> _updateAllowance() async {
+//   try {
+//     for (var entry in _updatedStatuses.entries) {
+//       String docId = entry.key;
+//       String newStatus = entry.value;
+
+//       // ✅ ดึงข้อมูลจาก `practice_users`
+//       DocumentSnapshot practiceUserDoc = await FirebaseFirestore.instance
+//           .collection('practice_users')
+//           .doc(docId)
+//           .get();
+
+//       if (!practiceUserDoc.exists) continue;
+
+//       String userId = practiceUserDoc['user_id']; // 🔹 หาว่าเป็น User ไหน
+//       String practiceId = practiceUserDoc['practice_id']; // 🔹 หาว่าเป็นกิจกรรมไหน
+
+//       // ✅ ดึงข้อมูลจาก `pratice`
+//       DocumentSnapshot practiceDoc = await FirebaseFirestore.instance
+//           .collection('pratice')
+//           .doc(practiceId)
+//           .get();
+
+//       if (!practiceDoc.exists) continue;
+
+//       double allowanceToAdd = 0.0;
+//       if (newStatus == "on_time") {
+//         allowanceToAdd = (practiceDoc['prt_budget_ot'] ?? 0).toDouble();
+//       } else if (newStatus == "late") {
+//         allowanceToAdd = (practiceDoc['prt_budget_late'] ?? 0).toDouble();
+//       }
+
+//       if (allowanceToAdd > 0) {
+//         // ✅ อัปเดต allowance ของ User
+//         DocumentReference userRef =
+//             FirebaseFirestore.instance.collection('users').doc(userId);
+
+//         await FirebaseFirestore.instance.runTransaction((transaction) async {
+//           DocumentSnapshot userDoc = await transaction.get(userRef);
+//           if (userDoc.exists) {
+//             double currentAllowance = (userDoc['allowance'] ?? 0).toDouble();
+//             transaction.update(userRef, {
+//               'allowance': currentAllowance + allowanceToAdd,
+//             });
+//           }
+//         });
+//       }
+//     }
+//   } catch (e) {
+//     print("❌ Error updating allowance: $e");
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(content: Text("❌ Failed to update allowance.")),
+//     );
+//   }
+// }
 }
