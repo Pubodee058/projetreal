@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/constant.dart';
 
 class AdminAttendancePage extends StatefulWidget {
   @override
@@ -70,8 +71,10 @@ class _AdminAttendancePageState extends State<AdminAttendancePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Attendance Report'),
-        backgroundColor: Colors.redAccent,
+        title: Text('Attendance Report',style: TextStyle(
+          color: Colors.white
+        ),),
+        backgroundColor: red,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -98,8 +101,10 @@ class _AdminAttendancePageState extends State<AdminAttendancePage> {
                 ),
                 ElevatedButton(
                   onPressed: _fetchAttendanceData,
-                  child: Text("Filter"),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                  child: Text("Filter",style: TextStyle(
+                    color: Colors.white
+                  ),),
+                  style: ElevatedButton.styleFrom(backgroundColor: red),
                 ),
               ],
             ),

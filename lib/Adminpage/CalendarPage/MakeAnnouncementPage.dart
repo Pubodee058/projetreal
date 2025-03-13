@@ -89,7 +89,7 @@ class _MakeAnnouncementPageState extends State<MakeAnnouncementPage> {
             /// 🔹 ปุ่มบันทึก
             ElevatedButton(
               onPressed: _saveAnnouncement,
-              child: Text("Save"),
+              child: Text("Save",style: TextStyle(color: Colors.white),),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             ),
           ],

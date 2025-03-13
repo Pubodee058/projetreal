@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myproject/Adminpage/AdminAttendancePage.dart';
+import 'package:myproject/Adminpage/AllAllowancePage.dart';
 import 'package:myproject/constant.dart';
 import 'package:myproject/main.dart';
 
@@ -36,6 +37,25 @@ class Allatheleprofile extends StatelessWidget {
                 ),
               ),
             ),
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: ElevatedButton(
+                onPressed: () {
+                  /// ✅ ไปยังหน้า AllAllowancePage
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AllAllowancePage()),
+                  );
+                },
+                child: Text('รายงานเบี้ยเลี้ยง', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: red,
+                  minimumSize: Size(double.infinity, 50),
+                ),
+                            ),
+              ),
+            SizedBox(height: 16),
+
             // ปุ่ม Log out อยู่ในส่วนของ body
             Padding(
               padding: const EdgeInsets.only(top: 16.0),

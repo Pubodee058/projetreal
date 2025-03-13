@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myproject/Adminpage/CalendarPage.dart';
+import 'package:myproject/Adminpage/CalendarPage/EditPracticePage.dart';
+import 'package:myproject/constant.dart';
 
 class PracticeDetailPage extends StatefulWidget {
   final String practiceId;
@@ -76,7 +78,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           TextButton(
-            child: Text('Confirm', style: TextStyle(color: Colors.redAccent)),
+            child: Text('Confirm', style: TextStyle(color: red)),
             onPressed: () {
               Navigator.pop(context); // ปิด dialog
               _deletePractice(prtDate, startTime, endTime); // เรียกฟังก์ชันลบ
@@ -93,8 +95,11 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Practice Detail'),
-        backgroundColor: Colors.redAccent,
+        title: Text(
+          'Practice Detail',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: red,
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -143,7 +148,14 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                       IconButton(
                         icon: Icon(Icons.edit, color: Colors.brown),
                         onPressed: () {
-                          // TODO: Implement Edit Function
+                          /// ✅ ไปหน้า EditPracticePage พร้อมส่ง practiceId
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditPracticePage(
+                                  practiceId: widget.practiceId),
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -194,7 +206,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.redAccent),
+                            color: red),
                       ),
                     ],
                   ),
@@ -207,7 +219,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                     children: [
                       FloatingActionButton(
                         backgroundColor: Colors.grey[300],
-                        child: Icon(Icons.delete, color: Colors.red),
+                        child: Icon(Icons.delete, color: red),
                         onPressed: () => _confirmDeleteDialog(
                           practiceData['prt_date'],
                           practiceData['prt_start_time'],
@@ -232,7 +244,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                                 fontSize: 16),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: red,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20)),
                           ),
@@ -255,7 +267,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                           style: TextStyle(color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: red,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20)),
                         ),
@@ -271,7 +283,7 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                             color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: red,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20)),
                       ),
@@ -315,18 +327,17 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
                 title: Text(
                   fullName,
                   style: TextStyle(
-                    color:
-                        currentStatus == "absent" ? Colors.red : Colors.black,
+                    color: currentStatus == "absent" ? red : Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                leading: Icon(Icons.person, color: Colors.deepOrangeAccent),
+                leading: Icon(Icons.person, color: red),
                 trailing: _isChecking
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: Icon(Icons.close, color: Colors.red),
+                            icon: Icon(Icons.close, color: red),
                             onPressed: () =>
                                 _updateTempStatus(doc.id, "absent"),
                           ),
@@ -357,77 +368,77 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
     );
   }
 
- void _finishJob() async {
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  void _finishJob() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  try {
-    // ดึงข้อมูลผู้เข้าร่วมทั้งหมดของ practice นี้
-    QuerySnapshot practiceUsers = await firestore
-        .collection('practice_users')
-        .where('practice_id', isEqualTo: widget.practiceId)
-        .get();
-
-    // ดึงข้อมูลของ practice ที่เกี่ยวข้อง
-    DocumentSnapshot practiceDoc =
-        await firestore.collection('pratice').doc(widget.practiceId).get();
-
-    if (!practiceDoc.exists) {
-      print("❌ Practice document not found!");
-      return;
-    }
-
-    double budgetOT = (practiceDoc['prt_budget_ot'] ?? 0).toDouble();
-    double budgetLate = (practiceDoc['prt_budget_late'] ?? 0).toDouble();
-
-    WriteBatch batch = firestore.batch();
-
-    for (var doc in practiceUsers.docs) {
-      String userId = doc['user_id'];
-      String status = doc['status'];
-      String stuFirstName = doc['stu_firstname'];
-
-      // ค้นหาผู้ใช้จากตาราง users ที่มี user_id และ stu_firstname ตรงกัน
-      QuerySnapshot userSnapshot = await firestore
-          .collection('users')
-          .where('user_id', isEqualTo: userId)
-          .where('stu_firstname', isEqualTo: stuFirstName)
+    try {
+      // ดึงข้อมูลผู้เข้าร่วมทั้งหมดของ practice นี้
+      QuerySnapshot practiceUsers = await firestore
+          .collection('practice_users')
+          .where('practice_id', isEqualTo: widget.practiceId)
           .get();
 
-      if (userSnapshot.docs.isNotEmpty) {
-        DocumentReference userRef = userSnapshot.docs.first.reference;
+      // ดึงข้อมูลของ practice ที่เกี่ยวข้อง
+      DocumentSnapshot practiceDoc =
+          await firestore.collection('pratice').doc(widget.practiceId).get();
 
-        // อัปเดต allowance ตาม status ของผู้ใช้
-        if (status == "on_time") {
-          batch.update(userRef, {'allowance': FieldValue.increment(budgetOT)});
-        } else if (status == "late") {
-          batch.update(userRef, {'allowance': FieldValue.increment(budgetLate)});
+      if (!practiceDoc.exists) {
+        print("❌ Practice document not found!");
+        return;
+      }
+
+      double budgetOT = (practiceDoc['prt_budget_ot'] ?? 0).toDouble();
+      double budgetLate = (practiceDoc['prt_budget_late'] ?? 0).toDouble();
+
+      WriteBatch batch = firestore.batch();
+
+      for (var doc in practiceUsers.docs) {
+        String userId = doc['user_id'];
+        String status = doc['status'];
+        String stuFirstName = doc['stu_firstname'];
+
+        // ค้นหาผู้ใช้จากตาราง users ที่มี user_id และ stu_firstname ตรงกัน
+        QuerySnapshot userSnapshot = await firestore
+            .collection('users')
+            .where('user_id', isEqualTo: userId)
+            .where('stu_firstname', isEqualTo: stuFirstName)
+            .get();
+
+        if (userSnapshot.docs.isNotEmpty) {
+          DocumentReference userRef = userSnapshot.docs.first.reference;
+
+          // อัปเดต allowance ตาม status ของผู้ใช้
+          if (status == "on_time") {
+            batch
+                .update(userRef, {'allowance': FieldValue.increment(budgetOT)});
+          } else if (status == "late") {
+            batch.update(
+                userRef, {'allowance': FieldValue.increment(budgetLate)});
+          }
         }
       }
+
+      // อัปเดตว่า practice นี้ถูกเช็คเสร็จแล้ว
+      batch.update(firestore.collection('pratice').doc(widget.practiceId),
+          {'checked': true});
+
+      await batch.commit();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("✅ Job Finished Successfully!")),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => CalendarPage()),
+      );
+    } catch (e) {
+      print("❌ Error finishing job: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Failed to finish job: $e")),
+      );
     }
-
-    // อัปเดตว่า practice นี้ถูกเช็คเสร็จแล้ว
-    batch.update(
-        firestore.collection('pratice').doc(widget.practiceId),
-        {'checked': true});
-
-    await batch.commit();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ Job Finished Successfully!")),
-    );
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => CalendarPage()),
-    );
-  } catch (e) {
-    print("❌ Error finishing job: $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ Failed to finish job: $e")),
-    );
   }
-}
-
 
   /// 🔹 **ฟังก์ชันอัปเดตค่า `status` ชั่วคราวใน UI**
   void _updateTempStatus(String docId, String status) {
@@ -437,34 +448,31 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
   }
 
   /// 🔹 **ฟังก์ชันบันทึก `status` กลับไปที่ Firestore**
-void _saveStatuses() async {
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  void _saveStatuses() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  try {
-    for (var entry in _updatedStatuses.entries) {
-      // อัปเดตสถานะของ user ใน practice_users
-      await firestore.collection('practice_users').doc(entry.key).update({
-        'status': entry.value
+    try {
+      for (var entry in _updatedStatuses.entries) {
+        // อัปเดตสถานะของ user ใน practice_users
+        await firestore
+            .collection('practice_users')
+            .doc(entry.key)
+            .update({'status': entry.value});
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("✅ Updated statuses successfully!")));
+
+      setState(() {
+        _isChecking = false;
+        _updatedStatuses.clear();
       });
+    } catch (e) {
+      print("❌ Error saving statuses: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Failed to save statuses: $e")));
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ Updated statuses successfully!"))
-    );
-
-    setState(() {
-      _isChecking = false;
-      _updatedStatuses.clear();
-    });
-
-  } catch (e) {
-    print("❌ Error saving statuses: $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ Failed to save statuses: $e"))
-    );
   }
-}
-
 
 //   Future<void> _updateAllowance() async {
 //   try {

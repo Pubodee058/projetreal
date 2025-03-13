@@ -132,7 +132,7 @@ Widget build(BuildContext context) {
             /// 🔹 ปุ่มบันทึก
             ElevatedButton(
               onPressed: _savePractice,
-              child: Text("Save"),
+              child: Text("Save",style: TextStyle(color: Colors.white),),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             ),
           ],
