@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/Adminpage/CalendarPage.dart';
+import 'package:myproject/constant.dart';
 
 class MakeAnnouncementPage extends StatefulWidget {
   final DateTime selectedDate; // รับวันที่ที่เลือกมาจาก `AdminSchedulePage`
@@ -20,28 +22,43 @@ class _MakeAnnouncementPageState extends State<MakeAnnouncementPage> {
 
   /// 📌 ฟังก์ชันบันทึก `announcement`
   _saveAnnouncement() async {
-    if (_titleController.text.isEmpty || _startTime == null || _endTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("⚠️ กรุณากรอกข้อมูลให้ครบ!")));
-      return;
-    }
+  if (_titleController.text.isEmpty || _startTime == null || _endTime == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("⚠️ Please fill in all information!")));
+    return;
+  }
 
+  try {
     await _firestore.collection('Announcement').add({
       'ann_title': _titleController.text,
-      'ann_date': Timestamp.fromDate(widget.selectedDate), // ✅ ล็อควันที่จากปฏิทิน
+      'ann_date': Timestamp.fromDate(widget.selectedDate),
       'ann_start_time': "${_startTime!.hour}:${_startTime!.minute}",
       'ann_end_time': "${_endTime!.hour}:${_endTime!.minute}",
       'ann_detail': _detailController.text,
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("✅ บันทึกประกาศเรียบร้อย!")));
-    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Create announcement successful!")),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => CalendarPage()),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Unable to create announcement: $e")));
   }
+}
+
 
   /// 📌 UI ฟอร์ม
   @override
    Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Make an Announcement"), backgroundColor: Colors.redAccent),
+      appBar: AppBar(title: Text("Make an Announcement",style: TextStyle(
+        color: Colors.white
+      ),), backgroundColor: red),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -90,7 +107,7 @@ class _MakeAnnouncementPageState extends State<MakeAnnouncementPage> {
             ElevatedButton(
               onPressed: _saveAnnouncement,
               child: Text("Save",style: TextStyle(color: Colors.white),),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: ElevatedButton.styleFrom(backgroundColor: red),
             ),
           ],
         ),

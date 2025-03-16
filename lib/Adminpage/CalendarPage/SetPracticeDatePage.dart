@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/constant.dart';
 
 class SetPracticeDatePage extends StatefulWidget {
   final DateTime selectedDate; // รับวันที่จาก `AdminSchedulePage`
@@ -24,7 +25,7 @@ class _SetPracticeDatePageState extends State<SetPracticeDatePage> {
 Future<void> _savePractice() async {
   if (_titleController.text.isEmpty || _startTime == null || _endTime == null) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("⚠️ กรุณากรอกข้อมูลให้ครบ!")));
+        .showSnackBar(SnackBar(content: Text("⚠️ Please fill in all information!")));
     return;
   }
 
@@ -64,13 +65,13 @@ Future<void> _savePractice() async {
     await batch.commit();
 
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("✅ บันทึกการฝึกซ้อมเรียบร้อย!")));
+        .showSnackBar(SnackBar(content: Text("✅ Training record completed!")));
 
     Navigator.pop(context);
   } catch (e) {
     print("❌ Error saving practice: $e");
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("❌ ไม่สามารถบันทึกการฝึกซ้อมได้!")));
+        .showSnackBar(SnackBar(content: Text("❌ Fail to save training session!")));
   }
 }
 
@@ -78,7 +79,9 @@ Future<void> _savePractice() async {
   @override
 Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Set Practice Date"), backgroundColor: Colors.redAccent),
+      appBar: AppBar(title: Text("Set Practice Date",style: TextStyle(
+        color: Colors.white
+      ),), backgroundColor: red),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -133,7 +136,7 @@ Widget build(BuildContext context) {
             ElevatedButton(
               onPressed: _savePractice,
               child: Text("Save",style: TextStyle(color: Colors.white),),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: ElevatedButton.styleFrom(backgroundColor: red),
             ),
           ],
         ),

@@ -51,7 +51,7 @@ class _AdminPageState extends State<AdminPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             activeIcon: _buildSelectedIcon(Icons.person),
-            label: 'Setting',
+            label: 'Report',
           ),
         ],
       ),

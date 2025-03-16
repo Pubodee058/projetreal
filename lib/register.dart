@@ -14,52 +14,61 @@ class _RegisterState extends State<Register> {
   final TextEditingController emailController = TextEditingController();
   bool isLoading = false;
 
-  Future<void> _goToNextPage() async {
-    String email = emailController.text.trim();
-    String password = passwordController.text.trim();
+Future<void> _goToNextPage() async {
+  String email = emailController.text.trim();
+  String password = passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('กรุณากรอก Email และ Password')),
-      );
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      // ตรวจสอบว่า Email นี้มีอยู่แล้วใน Firestore หรือไม่
-      var querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('stu_email', isEqualTo: email)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        // ถ้า Email ซ้ำ
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Email นี้ถูกใช้งานแล้ว กรุณาใช้ Email อื่น')),
-        );
-      } else {
-        // ถ้า Email ไม่ซ้ำ → ไปหน้า 2
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SignupPageStep2(email: email, password: password),
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('กรุณากรอก Email และ Password')),
+    );
+    return;
   }
+
+  // ✅ เช็คความยาวพาสเวิร์ดให้มากกว่า 6 ตัว
+  if (password.length < 6) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร')),
+    );
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    // ✅ ตรวจสอบว่า Email นี้มีอยู่แล้วใน Firestore หรือไม่
+    var querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('stu_email', isEqualTo: email)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // 📌 ถ้า Email ซ้ำ
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Email นี้ถูกใช้งานแล้ว กรุณาใช้ Email อื่น')),
+      );
+    } else {
+      // ✅ ถ้า Email ไม่ซ้ำ → ไปหน้า 2
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SignupPageStep2(email: email, password: password),
+        ),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+    );
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +76,7 @@ class _RegisterState extends State<Register> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: red,
-        title: Text('สมัครสมาชิก',style: TextStyle(color: Colors.white),),
+        title: Text('Register',style: TextStyle(color: Colors.white),),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

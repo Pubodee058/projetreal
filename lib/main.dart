@@ -34,65 +34,90 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
 
   Future<void> _login() async {
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('กรุณากรอก Email และ Password')),
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('กรุณากรอก Email และ Password')),
+    );
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    // ✅ เช็คกรณีเป็น Admin (Fix ค่าไว้)
+    if (email == "admin" && password == "123456") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => AdminPage()),
       );
       return;
     }
 
-    setState(() {
-      isLoading = true;
-    });
+    // ✅ ถ้าไม่ใช่ Admin → เช็ค Firebase Authentication
+    UserCredential userCredential =
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-    try {
-      // ✅ เช็คกรณีเป็น Admin (Fix ค่าไว้)
-      if (email == "admin" && password == "123456") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => AdminPage()),
-        );
-        return;
-      }
+    String uid = userCredential.user!.uid;
 
-      // ✅ ถ้าไม่ใช่ Admin → เช็ค Firebase Authentication
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+    // ✅ ดึงข้อมูลผู้ใช้จาก Firestore
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (userDoc.exists) {
+      var userData = userDoc.data() as Map<String, dynamic>;
+      String userRole = userData['role'] ?? 'user'; // ถ้าไม่มี field 'role' ให้เป็น user
+
+      // ✅ ถ้าเป็น User → ไปหน้า User Page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => Mainuserpage()),
       );
-
-      String uid = userCredential.user!.uid;
-
-      // ✅ ดึงข้อมูลผู้ใช้จาก Firestore
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
-      if (userDoc.exists) {
-        var userData = userDoc.data() as Map<String, dynamic>;
-        String userRole = userData['role'] ?? 'user'; // ถ้าไม่มี field 'role' ให้เป็น user
-
-        // ✅ ถ้าเป็น User → ไปหน้า User Page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Mainuserpage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ไม่พบข้อมูลผู้ใช้ในระบบ')),
-        );
-      }
-    } catch (e) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+        SnackBar(content: Text('ไม่พบข้อมูลผู้ใช้ในระบบ')),
       );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
     }
+
+  } on FirebaseAuthException catch (e) {
+    // ⬅️ แยกส่วน catch ที่เป็น FirebaseAuthException
+    if (e.code == 'user-not-found') {
+      // ไม่มีบัญชีในระบบ
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No account find try later')),
+      );
+    } else if (e.code == 'wrong-password') {
+      // รหัสผ่านผิด
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Wrong-password try later')),
+      );
+    } else {
+      // กรณีอื่น ๆ
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Not found try another Email or password')),
+      );
+    }
+  } catch (e) {
+    // ⬅️ กรณีเป็น Error ชนิดอื่นที่ไม่ใช่ FirebaseAuthException
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+    );
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
-                labelText: 'Email หรือ Username',
+                labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -160,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                 height: size.height * 0.04,
                 child: const Center(
                   child: Text(
-                    'สมัครสมาชิก',
+                    'Register',
                     style: TextStyle(
                       color: red,
                       fontSize: 16,

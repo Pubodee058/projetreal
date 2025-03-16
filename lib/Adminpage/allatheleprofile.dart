@@ -28,7 +28,7 @@ class Allatheleprofile extends StatelessWidget {
                   );
                 },
                 child: Text(
-                  'ออกรายงานการซ้อม',
+                  'Training report',
                   style: TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -47,7 +47,7 @@ class Allatheleprofile extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => AllAllowancePage()),
                   );
                 },
-                child: Text('รายงานเบี้ยเลี้ยง', style: TextStyle(color: Colors.white)),
+                child: Text('Allowance report', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: red,
                   minimumSize: Size(double.infinity, 50),

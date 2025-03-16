@@ -201,12 +201,12 @@ Future<void> _joinPractice(String practiceId) async {
     }
 
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("✅ เข้าร่วมกิจกรรมสำเร็จ!")));
+        .showSnackBar(SnackBar(content: Text("✅ Successfully participated in the event!")));
 
   } catch (e) {
     print("❌ Error joining practice: $e");
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("❌ ไม่สามารถเข้าร่วมกิจกรรมได้!")));
+        .showSnackBar(SnackBar(content: Text("❌ Unable to participate in the event!")));
   }
 }
 
@@ -243,13 +243,13 @@ Future<void> _cancelPractice(DateTime practiceDate) async {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ ยกเลิกกิจกรรมสำเร็จ! สถานะถูกเปลี่ยนเป็น absent."))
+      SnackBar(content: Text("✅ Activity canceled successfully!."))
     );
 
   } catch (e) {
     print("❌ Error cancelling practice: $e");
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ ไม่สามารถยกเลิกกิจกรรมได้!")),
+      SnackBar(content: Text("❌ The event cannot be canceled!")),
     );
   }
 }

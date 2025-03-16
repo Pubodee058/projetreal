@@ -57,7 +57,7 @@ Future<void> _registerUser() async {
   if (lastNameController.text.isEmpty) missingFields.add("นามสกุล");
   if (phoneNumberController.text.isEmpty) missingFields.add("เบอร์โทรศัพท์");
   if (selectedBirthDate == null) missingFields.add("วันเกิด");
-  if (studentIdController.text.isEmpty) missingFields.add("รหัสนักศึกษา"); // ✅ เช็คว่าผู้ใช้กรอกหรือไม่
+  if (studentIdController.text.isEmpty) missingFields.add("รหัสนักศึกษา"); 
   if (facultyController.text.isEmpty) missingFields.add("คณะ");
   if (majorController.text.isEmpty) missingFields.add("สาขา");
   if (selectedGrade == null) missingFields.add("ระดับชั้น");
@@ -65,7 +65,7 @@ Future<void> _registerUser() async {
   if (missingFields.isNotEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("กรุณากรอกข้อมูลให้ครบ: ${missingFields.join(', ')}"),
+        content: Text("Please fill in all information: ${missingFields.join(', ')}"),
         backgroundColor: Colors.red,
       ),
     );
@@ -77,7 +77,26 @@ Future<void> _registerUser() async {
   });
 
   try {
-    // ✅ สมัครสมาชิก Firebase Authentication
+    String userID = studentIdController.text.trim();
+
+    // 🟢 (1) ตรวจสอบว่า user_id นี้ซ้ำหรือไม่ใน Firestore
+    var querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('user_id', isEqualTo: userID)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // ถ้า user_id ซ้ำ
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Duplicate student ID number. Please change it.')),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    // 🟢 (2) ถ้า user_id ไม่ซ้ำ → สร้างบัญชีใน Firebase Auth
     UserCredential userCredential =
         await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: widget.email,
@@ -85,15 +104,11 @@ Future<void> _registerUser() async {
     );
 
     String firebaseUID = userCredential.user!.uid;
-    String userID = studentIdController.text.trim(); // ✅ ใช้ค่าจากที่ผู้ใช้กรอก
 
-    // ✅ บันทึกข้อมูลลง Firestore พร้อม `user_id` และ `allowance = 0`
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(firebaseUID)
-        .set({
+    // 🟢 (3) บันทึกข้อมูลลง Firestore ใน 'users'
+    await FirebaseFirestore.instance.collection('users').doc(firebaseUID).set({
       'firebase_uid': firebaseUID,
-      'user_id': userID, // ✅ ใช้ค่าที่ผู้ใช้กรอกในช่อง studentIdController
+      'user_id': userID, 
       'stu_email': widget.email,
       'stu_firstname': firstNameController.text,
       'stu_lastname': lastNameController.text,
@@ -103,23 +118,23 @@ Future<void> _registerUser() async {
       'stu_major': majorController.text,
       'stu_grade': selectedGrade,
       'status': "",
-      'role': "user", // ✅ กำหนดค่า role เป็น "user"
-      'allowance': 0, // 🔥 เพิ่มค่าเริ่มต้น `allowance = 0`
+      'role': "user",
+      'allowance': 0, 
       'createdAt': DateTime.now(),
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('สมัครสมาชิกสำเร็จ!')),
+      SnackBar(content: Text('Successfully registered!')),
     );
 
-    // ✅ พาผู้ใช้ไปหน้า Login
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
     );
+
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+      SnackBar(content: Text('An error occurred: $e')),
     );
   } finally {
     setState(() {
@@ -130,13 +145,14 @@ Future<void> _registerUser() async {
 
 
 
+
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: red,
-        title: Text('Sign Up ',style: TextStyle(color: Colors.white),),
+        title: Text('Sign Up Information ',style: TextStyle(color: Colors.white),),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -145,34 +161,34 @@ Future<void> _registerUser() async {
             TextField(
               controller: firstNameController,
               decoration: InputDecoration(
-                  labelText: 'ชื่อจริง', border: OutlineInputBorder()),
+                  labelText: 'Firstname', border: OutlineInputBorder()),
             ),
             SizedBox(height: size.height * 0.01),
             TextField(
               controller: lastNameController,
               decoration: InputDecoration(
-                  labelText: 'นามสกุล', border: OutlineInputBorder()),
+                  labelText: 'Lastname', border: OutlineInputBorder()),
             ),
             SizedBox(height: size.height * 0.01),
             TextField(
               controller: phoneNumberController,
               decoration: InputDecoration(
-                  labelText: 'เบอร์โทรศัพท์', border: OutlineInputBorder()),
+                  labelText: 'Telephonenumber', border: OutlineInputBorder()),
             ),
             SizedBox(height: size.height * 0.01),
             TextField(
               controller: studentIdController,
               decoration: InputDecoration(
-                  labelText: 'รหัสนักศึกษา', border: OutlineInputBorder()),
+                  labelText: 'StudentID', border: OutlineInputBorder()),
             ),
             SizedBox(height: size.height * 0.01),
             TextField(
               controller: birthDateController,
               readOnly: true, // ✅ ป้องกันไม่ให้ผู้ใช้พิมพ์เอง
               decoration: InputDecoration(
-                labelText: "วันเกิด",
+                labelText: "Birthday",
                 hintText:
-                    "เลือกวันเกิด", // ✅ เพิ่มข้อความกำกับเมื่อยังไม่ได้เลือกวัน
+                    "Please select your Birthday", // ✅ เพิ่มข้อความกำกับเมื่อยังไม่ได้เลือกวัน
                 border: OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(Icons.calendar_today),
@@ -184,27 +200,27 @@ Future<void> _registerUser() async {
             TextField(
               controller: facultyController,
               decoration: InputDecoration(
-                  labelText: 'คณะ', border: OutlineInputBorder()),
+                  labelText: 'Faculty', border: OutlineInputBorder()),
             ),
             SizedBox(height: size.height * 0.01),
             TextField(
               controller: majorController,
               decoration: InputDecoration(
-                  labelText: 'สาขา', border: OutlineInputBorder()),
+                  labelText: 'Major', border: OutlineInputBorder()),
             ),
             SizedBox(height: size.height * 0.01),
             DropdownButtonFormField<int>(
               decoration: InputDecoration(
-                labelText: "ระดับชั้น",
+                labelText: "Grade",
                 border: OutlineInputBorder(),
               ),
               value: selectedGrade,
               items: const [
-                DropdownMenuItem(value: 1, child: Text("ปี 1")),
-                DropdownMenuItem(value: 2, child: Text("ปี 2")),
-                DropdownMenuItem(value: 3, child: Text("ปี 3")),
-                DropdownMenuItem(value: 4, child: Text("ปี 4")),
-                DropdownMenuItem(value: 5, child: Text("ปี 5")),
+                DropdownMenuItem(value: 1, child: Text("1")),
+                DropdownMenuItem(value: 2, child: Text("2")),
+                DropdownMenuItem(value: 3, child: Text("3")),
+                DropdownMenuItem(value: 4, child: Text("4")),
+                DropdownMenuItem(value: 5, child: Text("5")),
               ],
               onChanged: (value) {
                 setState(() {
@@ -224,7 +240,7 @@ Future<void> _registerUser() async {
                         backgroundColor: red
                       ),
                       onPressed: _registerUser, // เรียกใช้งานฟังก์ชันสมัครสมาชิก
-                      child: Text("สมัครสมาชิก",style: TextStyle(
+                      child: Text("Register",style: TextStyle(
                         color: Colors.white, fontSize: 16,fontWeight: FontWeight.bold
                       ),),
                     ),

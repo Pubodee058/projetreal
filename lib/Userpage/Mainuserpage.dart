@@ -39,15 +39,15 @@ class _MainuserpageState extends State<Mainuserpage> {
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),
-            label: 'ตารางฝึกซ้อม',
+            label: 'Training Schedule',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.sports_basketball),
-            label: 'ยอดการซ้อม',
+            label: 'Training History',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'การตั้งค่า',
+            label: 'Profile',
           ),
         ],
       ),

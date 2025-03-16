@@ -123,7 +123,7 @@ class _ProfileuserpageState extends State<Profileuserpage> {
                   Text('Major: $major'), // ✅ แสดงสาขา
                   SizedBox(height: 4),
                   Text(
-                      'Student ID: $studentId (ปี $studentGrade)'), // ✅ แสดงรหัสนักศึกษา + ปี
+                      'Student ID: $studentId (year $studentGrade)'), // ✅ แสดงรหัสนักศึกษา + ปี
 
                   // Edit and Log Out Buttons
                   SizedBox(height: 30),
