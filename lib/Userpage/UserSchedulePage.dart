@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/Userpage/AnnouncementDetailPage.dart';
+import 'package:myproject/Userpage/PracticeDetailPage.dart';
 import 'package:myproject/Userpage/PracticeuserDetailPage.dart';
 import 'package:myproject/Userpage/eventuserdetail.dart';
 import 'package:myproject/constant.dart';
@@ -36,223 +38,223 @@ class _UserSchedulePageState extends State<UserSchedulePage> {
   }
 
   /// 📌 ดึงรายการฝึกซ้อม (`Practice`) และเรียงลำดับตามวันที่
-Stream<List<Map<String, dynamic>>> _getPractices() {
-  return _firestore
-      .collection('pratice')
-      .orderBy('prt_date', descending: false)
-      .snapshots()
-      .map((snapshot) {
-    return snapshot.docs
-        .where((doc) => doc.data().containsKey('checked') ? doc['checked'] == false : false) // ✅ กรองด้วย Dart
-        .map((doc) {
-      DateTime practiceDate;
-      if (doc['prt_date'] is Timestamp) {
-        practiceDate = (doc['prt_date'] as Timestamp).toDate();
-      } else if (doc['prt_date'] is String) {
-        practiceDate = DateTime.parse(doc['prt_date']);
-      } else {
-        practiceDate = DateTime.now(); // สำรองถ้า format ไม่ตรง
-      }
-
-      return {
-        'id': doc.id,
-        'title': doc['prt_title'] ?? "No Title",
-        'date': practiceDate,
-        'start_time': doc['prt_start_time'] ?? "No Time",
-        'detail': doc['prt_detail'] ?? "No Details",
-      };
-    }).toList();
-  });
-}
-
-
-
-  /// 📌 ดึงรายการประกาศ (`announcement`)
-Stream<List<Map<String, dynamic>>> _getAnnouncements() {
-  return _firestore
-      .collection('Announcement') // ✅ ตรวจสอบให้แน่ใจว่าสะกดตรงกับ Firestore
-      .orderBy('ann_date', descending: false)
-      .snapshots()
-      .map((snapshot) {
-    return snapshot.docs.map((doc) {
-      try {
-        DateTime announcementDate;
-        if (doc['ann_date'] is Timestamp) {
-          announcementDate = (doc['ann_date'] as Timestamp).toDate();
-        } else if (doc['ann_date'] is String) {
-          announcementDate = DateTime.parse(doc['ann_date']);
+  Stream<List<Map<String, dynamic>>> _getPractices() {
+    return _firestore
+        .collection('pratice')
+        .orderBy('prt_date', descending: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .where((doc) => doc.data().containsKey('checked')
+              ? doc['checked'] == false
+              : false) // ✅ กรองด้วย Dart
+          .map((doc) {
+        DateTime practiceDate;
+        if (doc['prt_date'] is Timestamp) {
+          practiceDate = (doc['prt_date'] as Timestamp).toDate();
+        } else if (doc['prt_date'] is String) {
+          practiceDate = DateTime.parse(doc['prt_date']);
         } else {
-          throw Exception("Invalid ann_date format: ${doc['ann_date']}");
+          practiceDate = DateTime.now(); // สำรองถ้า format ไม่ตรง
         }
 
         return {
           'id': doc.id,
-          'title': doc['ann_title']?.toString() ?? "No Title",
-          'date': announcementDate,
-          'start_time': doc['ann_start_time']?.toString() ?? "No Time",
-          'detail': doc['ann_detail']?.toString() ?? "No Details",
-        }.cast<String, dynamic>(); // ✅ บังคับให้เป็น Map<String, dynamic>
-      } catch (e) {
-        print("❌ Error parsing announcement: ${doc.id} - $e");
-        return <String, dynamic>{}; // ✅ คืนค่า Map ว่างในกรณีที่มีข้อผิดพลาด
-      }
-    }).toList();
-  });
-}
-
-
-
-Widget buildJoinCancelButton(Map<String, dynamic> practice) {
-  DateTime practiceDate;
-  if (practice['date'] is String) {
-    practiceDate = DateTime.parse(practice['date']);
-  } else if (practice['date'] is Timestamp) {
-    practiceDate = (practice['date'] as Timestamp).toDate();
-  } else if (practice['date'] is DateTime) {
-    practiceDate = practice['date'];
-  } else {
-    throw Exception("Invalid prt_date format: ${practice['date']}");
+          'title': doc['prt_title'] ?? "No Title",
+          'date': practiceDate,
+          'start_time': doc['prt_start_time'] ?? "No Time",
+          'detail': doc['prt_detail'] ?? "No Details",
+        };
+      }).toList();
+    });
   }
 
-  return FutureBuilder<bool>(
-    future: _isUserJoined(Timestamp.fromDate(practiceDate)), // ✅ ใช้ `Timestamp`
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) {
-        return CircularProgressIndicator();
-      }
-      bool isJoined = snapshot.data!;
-
-      return ElevatedButton(
-        onPressed: () async {
-          if (isJoined) {
-            await _cancelPractice(practiceDate); // ✅ อัปเดต `status` เป็น `"absent"`
+  /// 📌 ดึงรายการประกาศ (`announcement`)
+  Stream<List<Map<String, dynamic>>> _getAnnouncements() {
+    return _firestore
+        .collection('Announcement') // ✅ ตรวจสอบให้แน่ใจว่าสะกดตรงกับ Firestore
+        .orderBy('ann_date', descending: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        try {
+          DateTime announcementDate;
+          if (doc['ann_date'] is Timestamp) {
+            announcementDate = (doc['ann_date'] as Timestamp).toDate();
+          } else if (doc['ann_date'] is String) {
+            announcementDate = DateTime.parse(doc['ann_date']);
           } else {
-            await _joinPractice(practice['id']); // ✅ อัปเดต `status` เป็น `"on_time"`
+            throw Exception("Invalid ann_date format: ${doc['ann_date']}");
           }
 
-          // ✅ รีโหลดข้อมูลใหม่ให้ FutureBuilder
-          setState(() {}); // 🔄 บังคับให้ UI อัปเดต
-        },
-        child: Text(isJoined ? "Cancel" : "Join",style: TextStyle(color: Colors.white),),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isJoined ? Colors.grey : red,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        ),
+          return {
+            'id': doc.id,
+            'title': doc['ann_title']?.toString() ?? "No Title",
+            'date': announcementDate,
+            'start_time': doc['ann_start_time']?.toString() ?? "No Time",
+            'detail': doc['ann_detail']?.toString() ?? "No Details",
+          }.cast<String, dynamic>(); // ✅ บังคับให้เป็น Map<String, dynamic>
+        } catch (e) {
+          print("❌ Error parsing announcement: ${doc.id} - $e");
+          return <String, dynamic>{}; // ✅ คืนค่า Map ว่างในกรณีที่มีข้อผิดพลาด
+        }
+      }).toList();
+    });
+  }
+
+  Widget buildJoinCancelButton(Map<String, dynamic> practice) {
+    DateTime practiceDate;
+    if (practice['date'] is String) {
+      practiceDate = DateTime.parse(practice['date']);
+    } else if (practice['date'] is Timestamp) {
+      practiceDate = (practice['date'] as Timestamp).toDate();
+    } else if (practice['date'] is DateTime) {
+      practiceDate = practice['date'];
+    } else {
+      throw Exception("Invalid prt_date format: ${practice['date']}");
+    }
+
+    return FutureBuilder<bool>(
+      future:
+          _isUserJoined(Timestamp.fromDate(practiceDate)), // ✅ ใช้ `Timestamp`
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+        bool isJoined = snapshot.data!;
+
+        return ElevatedButton(
+          onPressed: () async {
+            if (isJoined) {
+              await _cancelPractice(
+                  practiceDate); // ✅ อัปเดต `status` เป็น `"absent"`
+            } else {
+              await _joinPractice(
+                  practice['id']); // ✅ อัปเดต `status` เป็น `"on_time"`
+            }
+
+            // ✅ รีโหลดข้อมูลใหม่ให้ FutureBuilder
+            setState(() {}); // 🔄 บังคับให้ UI อัปเดต
+          },
+          child: Text(
+            isJoined ? "Cancel" : "Join",
+            style: TextStyle(color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isJoined ? Colors.grey : red,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 📌 ฟังก์ชันเช็คว่าผู้ใช้เข้าร่วมแล้วหรือยัง
+  Future<bool> _isUserJoined(Timestamp practiceDate) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (!userDoc.exists) return false;
+    String stuFirstName = userDoc['stu_firstname'];
+    String stuLastName = userDoc['stu_lastname'];
+
+    QuerySnapshot query = await FirebaseFirestore.instance
+        .collection('practice_users')
+        .where('stu_firstname', isEqualTo: stuFirstName)
+        .where('stu_lastname', isEqualTo: stuLastName)
+        .where('prt_date', isEqualTo: practiceDate)
+        .where('status', isEqualTo: 'on_time') // ✅ เช็คเฉพาะคนที่มากิจกรรม
+        .get();
+
+    return query.docs.isNotEmpty; // ✅ ถ้าเจอเอกสาร แสดงว่ามาแล้ว
+  }
+
+  /// 📌 ฟังก์ชันสำหรับเข้าร่วมการฝึกซ้อม
+  Future<void> _joinPractice(String practiceId) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception("User not logged in");
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userDoc.exists) throw Exception("User document not found");
+      String stuFirstName = userDoc['stu_firstname'];
+      String stuLastName = userDoc['stu_lastname'];
+
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('practice_users')
+          .where('practice_id', isEqualTo: practiceId)
+          .where('stu_firstname', isEqualTo: stuFirstName)
+          .where('stu_lastname', isEqualTo: stuLastName)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        await query.docs.first.reference.update({'status': 'on_time'});
+      }
+
+      if (mounted) {
+        setState(() {}); // ✅ รีโหลด UI
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("✅ Successfully participated in the event!")));
+    } catch (e) {
+      print("❌ Error joining practice: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Unable to participate in the event!")));
+    }
+  }
+
+  /// 📌 ฟังก์ชันสำหรับยกเลิกการฝึกซ้อม
+  Future<void> _cancelPractice(DateTime practiceDate) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception("User not logged in");
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userDoc.exists) throw Exception("User document not found");
+      String stuFirstName = userDoc['stu_firstname'];
+      String stuLastName = userDoc['stu_lastname'];
+
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('practice_users')
+          .where('prt_date', isEqualTo: Timestamp.fromDate(practiceDate))
+          .where('stu_firstname', isEqualTo: stuFirstName)
+          .where('stu_lastname', isEqualTo: stuLastName)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception("No matching document found to update.");
+      }
+
+      await query.docs.first.reference.update({'status': 'absent'});
+
+      if (mounted) {
+        setState(() {}); // ✅ รีโหลด UI
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("✅ Activity canceled successfully!.")));
+    } catch (e) {
+      print("❌ Error cancelling practice: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ The event cannot be canceled!")),
       );
-    },
-  );
-}
-
-
-
-/// 📌 ฟังก์ชันเช็คว่าผู้ใช้เข้าร่วมแล้วหรือยัง
-Future<bool> _isUserJoined(Timestamp practiceDate) async {
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user == null) return false;
-
-  DocumentSnapshot userDoc = await FirebaseFirestore.instance
-      .collection('users')
-      .doc(user.uid)
-      .get();
-
-  if (!userDoc.exists) return false;
-  String stuFirstName = userDoc['stu_firstname'];
-  String stuLastName = userDoc['stu_lastname'];
-
-  QuerySnapshot query = await FirebaseFirestore.instance
-      .collection('practice_users')
-      .where('stu_firstname', isEqualTo: stuFirstName)
-      .where('stu_lastname', isEqualTo: stuLastName)
-      .where('prt_date', isEqualTo: practiceDate)
-      .where('status', isEqualTo: 'on_time') // ✅ เช็คเฉพาะคนที่มากิจกรรม
-      .get();
-
-  return query.docs.isNotEmpty; // ✅ ถ้าเจอเอกสาร แสดงว่ามาแล้ว
-}
-
-/// 📌 ฟังก์ชันสำหรับเข้าร่วมการฝึกซ้อม
-Future<void> _joinPractice(String practiceId) async {
-  try {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("User not logged in");
-
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
-
-    if (!userDoc.exists) throw Exception("User document not found");
-    String stuFirstName = userDoc['stu_firstname'];
-    String stuLastName = userDoc['stu_lastname'];
-
-    QuerySnapshot query = await FirebaseFirestore.instance
-        .collection('practice_users')
-        .where('practice_id', isEqualTo: practiceId)
-        .where('stu_firstname', isEqualTo: stuFirstName)
-        .where('stu_lastname', isEqualTo: stuLastName)
-        .get();
-
-    if (query.docs.isNotEmpty) {
-      await query.docs.first.reference.update({'status': 'on_time'});
     }
-
-    if (mounted) {
-      setState(() {}); // ✅ รีโหลด UI
-    }
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("✅ Successfully participated in the event!")));
-
-  } catch (e) {
-    print("❌ Error joining practice: $e");
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("❌ Unable to participate in the event!")));
   }
-}
-
-/// 📌 ฟังก์ชันสำหรับยกเลิกการฝึกซ้อม
-Future<void> _cancelPractice(DateTime practiceDate) async {
-  try {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("User not logged in");
-
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
-
-    if (!userDoc.exists) throw Exception("User document not found");
-    String stuFirstName = userDoc['stu_firstname'];
-    String stuLastName = userDoc['stu_lastname'];
-
-    QuerySnapshot query = await FirebaseFirestore.instance
-        .collection('practice_users')
-        .where('prt_date', isEqualTo: Timestamp.fromDate(practiceDate))
-        .where('stu_firstname', isEqualTo: stuFirstName)
-        .where('stu_lastname', isEqualTo: stuLastName)
-        .get();
-
-    if (query.docs.isEmpty) {
-      throw Exception("No matching document found to update.");
-    }
-
-    await query.docs.first.reference.update({'status': 'absent'});
-
-    if (mounted) {
-      setState(() {}); // ✅ รีโหลด UI
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("✅ Activity canceled successfully!."))
-    );
-
-  } catch (e) {
-    print("❌ Error cancelling practice: $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ The event cannot be canceled!")),
-    );
-  }
-}
 
   /// 📌 ฟังก์ชันแปลง `DateTime` เป็น String
   String _formatDate(DateTime dateTime) {
@@ -263,7 +265,10 @@ Future<void> _cancelPractice(DateTime practiceDate) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Schedule',style: TextStyle(color: Colors.white),),
+        title: Text(
+          'Schedule',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: red,
       ),
       body: SingleChildScrollView(
@@ -324,8 +329,7 @@ Future<void> _cancelPractice(DateTime practiceDate) async {
       padding: const EdgeInsets.all(16.0),
       child: Text(
         title,
-        style: TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: red),
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: red),
       ),
     );
   }
@@ -339,29 +343,57 @@ Future<void> _cancelPractice(DateTime practiceDate) async {
   }
 
   /// 📌 Card สำหรับ Practice
-Widget _buildPracticeCard(Map<String, dynamic> practice, bool isToday) {
-  return Card(
-    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: ListTile(
-      leading: Icon(Icons.access_time, color: red),
-      title: Text(practice['title']),
-      subtitle: Text(
-          '${_formatDate(practice['date'])} - ${practice['start_time']}\n${practice['detail']}'),
-      trailing: buildJoinCancelButton(practice), // ✅ ใช้ปุ่ม Join/Cancel
-    ),
-  );
-}
-
+  Widget _buildPracticeCard(Map<String, dynamic> practice, bool isToday) {
+    return GestureDetector(
+      onTap: () async {
+        // 🔹 ไปหน้า PracticeDetailPage
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PracticeUserDetailPage(
+              practiceId: practice['id'],
+            ),
+          ),
+        );
+        // 🔹 ถ้า result == 'updated' → setState เพื่อรีเฟรช
+        if (result == 'updated') {
+          setState(() {});
+        }
+      },
+      child: Card(
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: ListTile(
+          leading: Icon(Icons.access_time, color: red),
+          title: Text(practice['title']),
+          subtitle: Text(
+            '${_formatDate(practice['date'])} - ${practice['start_time']}\n${practice['detail']}',
+          ),
+          // 🔹 ใส่ปุ่ม Join/Cancel เป็น trailing กลับเข้ามา
+          trailing: buildJoinCancelButton(practice),
+        ),
+      ),
+    );
+  }
 
   /// 📌 Card สำหรับ Announcement
   Widget _buildAnnouncementCard(Map<String, dynamic> announcement) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
-        leading: Icon(Icons.announcement, color: red),
+        leading: Icon(Icons.announcement, color: Colors.red),
         title: Text(announcement['title']),
         subtitle: Text(
             '${_formatDate(announcement['date'])}\n${announcement['detail']}'),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AnnouncementUserDetailPage(
+                announcementId: announcement['id'],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

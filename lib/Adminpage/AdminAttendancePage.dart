@@ -124,7 +124,7 @@ class _AdminAttendancePageState extends State<AdminAttendancePage> {
                       rows: _generateRows(), // ✅ สร้างแถวข้อมูล
                     ),
                   )
-                : Center(child: Text("เลือกช่วงวันที่เพื่อดูข้อมูล")),
+                : Center(child: Text("Select a date range to view")),
           ],
         ),
       ),

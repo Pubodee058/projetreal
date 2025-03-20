@@ -53,20 +53,20 @@ class _SignupPageStep2State extends State<SignupPageStep2> {
 Future<void> _registerUser() async {
   List<String> missingFields = [];
 
-  if (firstNameController.text.isEmpty) missingFields.add("ชื่อจริง");
-  if (lastNameController.text.isEmpty) missingFields.add("นามสกุล");
-  if (phoneNumberController.text.isEmpty) missingFields.add("เบอร์โทรศัพท์");
-  if (selectedBirthDate == null) missingFields.add("วันเกิด");
-  if (studentIdController.text.isEmpty) missingFields.add("รหัสนักศึกษา"); 
-  if (facultyController.text.isEmpty) missingFields.add("คณะ");
-  if (majorController.text.isEmpty) missingFields.add("สาขา");
-  if (selectedGrade == null) missingFields.add("ระดับชั้น");
+  if (firstNameController.text.isEmpty) missingFields.add("Firstname");
+  if (lastNameController.text.isEmpty) missingFields.add("Lastname");
+  if (phoneNumberController.text.isEmpty) missingFields.add("Tel");
+  if (selectedBirthDate == null) missingFields.add("Birthday");
+  if (studentIdController.text.isEmpty) missingFields.add("StudentID"); 
+  if (facultyController.text.isEmpty) missingFields.add("Faculty");
+  if (majorController.text.isEmpty) missingFields.add("Major");
+  if (selectedGrade == null) missingFields.add("Grade");
 
   if (missingFields.isNotEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text("Please fill in all information: ${missingFields.join(', ')}"),
-        backgroundColor: Colors.red,
+        backgroundColor: red,
       ),
     );
     return;

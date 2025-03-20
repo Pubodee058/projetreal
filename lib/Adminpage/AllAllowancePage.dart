@@ -7,7 +7,7 @@ class AllAllowancePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('รายงานเบี้ยเลี้ยง',style: TextStyle(
+        title: Text('Allowance report',style: TextStyle(
           color: Colors.white
         ),),
         backgroundColor: red,

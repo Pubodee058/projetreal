@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/Adminpage/CalendarPage/AnnouncementAdminPage.dart';
 import 'package:myproject/Adminpage/CalendarPage/MakeAnnouncementPage.dart';
 import 'package:myproject/Adminpage/CalendarPage/PracticeDetailPage.dart';
 import 'package:myproject/Adminpage/CalendarPage/SetPracticeDatePage.dart';
+import 'package:myproject/Userpage/AnnouncementDetailPage.dart';
 import 'package:myproject/constant.dart';
 import 'package:table_calendar/table_calendar.dart';
 // import 'SetPracticeDatePage.dart'; // หน้าเพิ่ม Practice
@@ -220,32 +222,49 @@ Stream<List<Map<String, dynamic>>> _getPractices() {
     );
   }
 
-  Widget _buildAnnouncementCard(Map<String, dynamic> announcement) {
-    // ✅ ตรวจสอบและแปลง `announcement['date']` เป็น `DateTime`
-    DateTime date;
-    if (announcement['date'] is Timestamp) {
-      date = (announcement['date'] as Timestamp).toDate();
-    } else if (announcement['date'] is DateTime) {
-      date = announcement['date'];
-    } else {
-      date = DateTime.now(); // เผื่อเกิดข้อผิดพลาด ใช้วันที่ปัจจุบันแทน
-    }
-
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: Icon(Icons.textsms, color: red),
-        title: Text(announcement['title']),
-        subtitle: Text(
-          '${_formatDate(date)} - ${announcement['start_time']}\n${announcement['detail']}',
-        ),
-        trailing: IconButton(
-          icon: Icon(Icons.more_vert),
-          onPressed: () => _deleteAnnouncement(announcement['id']),
-        ),
-      ),
-    );
+Widget _buildAnnouncementCard(Map<String, dynamic> announcement) {
+  // ✅ ตรวจสอบและแปลง `announcement['date']` เป็น `DateTime`
+  DateTime date;
+  if (announcement['date'] is Timestamp) {
+    date = (announcement['date'] as Timestamp).toDate();
+  } else if (announcement['date'] is DateTime) {
+    date = announcement['date'];
+  } else {
+    date = DateTime.now(); // สำรองเผื่อ format ไม่ถูก
   }
+
+  return Card(
+    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: ListTile(
+      /// ⬇️ เมื่อกดทั้งการ์ด
+      onTap: () {
+        // ทำงานเมื่อกดการ์ด (ประกาศ)
+        // ตัวอย่าง: ไปหน้า AnnouncementDetailPage
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => Announcementadminpage(
+                announcementId: announcement['id'],
+              ),
+            ),
+        );
+      },
+
+      leading: Icon(Icons.textsms, color: red),
+      title: Text(announcement['title']),
+      subtitle: Text(
+        '${_formatDate(date)} - ${announcement['start_time']}\n${announcement['detail']}',
+      ),
+
+      /// ปุ่ม more_vert → ลบหรืออื่น ๆ
+      trailing: IconButton(
+        icon: Icon(Icons.more_vert),
+        onPressed: () => _deleteAnnouncement(announcement['id']),
+      ),
+    ),
+  );
+}
+
 
   /// 📌 ปรับให้ `_formatDate()` รองรับ `DateTime`
   String _formatDate(DateTime dateTime) {
